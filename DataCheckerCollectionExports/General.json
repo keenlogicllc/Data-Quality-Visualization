@@ -1,0 +1,355 @@
+{
+  "Name": "General",
+  "Description": "These scripts are used to help ensure quality of reporting as well as general cleanliness.",
+  "EnvironmentType": "Ed-Fi v2.X",
+  "Containers": [
+    {
+      "Name": "Course",
+      "Description": "Rules related to courses.",
+      "Rules": [
+        {
+          "Name": "CourseSubject_Mathematics",
+          "Description": "Courses in the ODS have subjects mapped to them, as defined in the SIS. This script will show any Mathematics courses that are mapped to a subject that is different from the FLDOE Course Code directory. ",
+          "ErrorMessage": "These Mathematics courses do not have their subjects aligned with the FLDOE Course Code Directory",
+          "SeverityLevel": 2,
+          "Resolution": "Update Ed-Fi Course Subjects in SIS",
+          "Sql": "select\n  c.EducationOrganizationId,\n  c.CourseCode,\n  c.CourseTitle,\n  d.Description as AcademicSubejctDescription\nfrom\n  edfi.Course c\n  left join edfi.AcademicSubjectDescriptor asd on c.AcademicSubjectDescriptorId = asd.AcademicSubjectDescriptorId\n  left join edfi.AcademicSubjectType AST on ast.AcademicSubjectTypeId = ASd.AcademicSubjectTypeId\n  left join edfi.Descriptor d on d.DescriptorId = asd.AcademicSubjectDescriptorId\nWhere\n  AST.AcademicSubjectTypeId not in (6)\n  and (\n    SUBSTRING(CourseCode, 11, 2) = '12'\n    or SUBSTRING(CourseCode, 11, 4) = '5012'\n  )\norder by\n  c.EducationOrganizationId,\n  C.CourseTitle,\n  C.CourseCode,\n  D.Description",
+          "Version": "6",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "CourseSubject_ELA",
+          "Description": "Courses in the ODS have subjects mapped to them, as defined in the SIS. This script will show any ELA courses that are mapped to a subject that is different from the FLDOE Course Code directory. ",
+          "ErrorMessage": "These ELA courses do not have their subjects aligned with the FLDOE Course Code Directory",
+          "SeverityLevel": 2,
+          "Resolution": "Update Ed-Fi Course Subjects in SIS",
+          "Sql": "select\n  c.EducationOrganizationId,\n  c.CourseCode,\n  c.CourseTitle,\n  d.Description as AcademicSubejctDescription\nfrom\n  edfi.Course c\n  left join edfi.AcademicSubjectDescriptor asd on c.AcademicSubjectDescriptorId = asd.AcademicSubjectDescriptorId\n  left join edfi.AcademicSubjectType AST on ast.AcademicSubjectTypeId = ASd.AcademicSubjectTypeId\n  left join edfi.Descriptor d on d.DescriptorId = asd.AcademicSubjectDescriptorId\nWhere\n  AST.AcademicSubjectTypeId not in (4)\n  and SUBSTRING(CourseCode, 1, 3) != '000'\n  and SUBSTRING(CourseCode, 13, 2) != '10'\n  and (\n    SUBSTRING(CourseCode, 11, 2) = '10'\n    or SUBSTRING(CourseCode, 11, 4) = '5010'\n  )\norder by\n  c.EducationOrganizationId,\n  C.CourseTitle,\n  C.CourseCode,\n  D.Description",
+          "Version": "7",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "CourseSubject_WorldLanguages",
+          "Description": "Courses in the ODS have subjects mapped to them, as defined in the SIS. This script will show any World Language courses that are mapped to a subject that is different from the FLDOE Course Code directory. ",
+          "ErrorMessage": "These World Language courses do not have their subjects aligned with the FLDOE Course Code Directory",
+          "SeverityLevel": 2,
+          "Resolution": "Update Ed-Fi Course Subjects in SIS",
+          "Sql": "select\n  c.EducationOrganizationId,\n  c.CourseCode,\n  c.CourseTitle,\n  d.Description as AcademicSubejctDescription\nfrom\n  edfi.Course c\n  left join edfi.AcademicSubjectDescriptor asd on c.AcademicSubjectDescriptorId = asd.AcademicSubjectDescriptorId\n  left join edfi.AcademicSubjectType AST on ast.AcademicSubjectTypeId = ASd.AcademicSubjectTypeId\n  left join edfi.Descriptor d on d.DescriptorId = asd.AcademicSubjectDescriptorId\nWhere\n  AST.AcademicSubjectTypeId not in (12)\n  and SUBSTRING(CourseCode, 1, 3) != '000'\n  and SUBSTRING(Coursecode, 11, 2) NOT IN ('77', '78', '79')\n  and (\n    SUBSTRING(CourseCode, 11, 2) = '07'\n    or SUBSTRING(CourseCode, 11, 4) = '1010'\n    or SUBSTRING(CourseCode, 11, 4) = '5007'\n  )\norder by\n  c.EducationOrganizationId,\n  C.CourseTitle,\n  C.CourseCode,\n  D.Description",
+          "Version": "6",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "CourseSubject_Science",
+          "Description": "Courses in the ODS have subjects mapped to them, as defined in the SIS. This script will show any Science courses that are mapped to a subject that is different from the FLDOE Course Code directory. ",
+          "ErrorMessage": "These Science courses do not have their subjects aligned with the FLDOE Course Code Directory",
+          "SeverityLevel": 2,
+          "Resolution": "Update Ed-Fi Course Subjects in SIS",
+          "Sql": "select\n  c.EducationOrganizationId,\n  c.CourseCode,\n  c.CourseTitle,\n  d.Description as AcademicSubejctDescription\nfrom\n  edfi.Course c\n  left join edfi.AcademicSubjectDescriptor asd on c.AcademicSubjectDescriptorId = asd.AcademicSubjectDescriptorId\n  left join edfi.AcademicSubjectType AST on ast.AcademicSubjectTypeId = ASd.AcademicSubjectTypeId\n  left join edfi.Descriptor d on d.DescriptorId = asd.AcademicSubjectDescriptorId\nWhere\n  AST.AcademicSubjectTypeId not in (10)\n  and SUBSTRING(CourseCode, 1, 3) != '000'\n  and (\n    SUBSTRING(CourseCode, 11, 2) = '20'\n    or SUBSTRING(CourseCode, 11, 4) = '5020'\n  )\norder by\n  c.EducationOrganizationId,\n  C.CourseTitle,\n  C.CourseCode,\n  D.Description",
+          "Version": "6",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "CourseSubject_SocialStudies",
+          "Description": "Courses in the ODS have subjects mapped to them, as defined in the SIS. This script will show any Social Studies courses that are mapped to a subject that is different from the FLDOE Course Code directory. ",
+          "ErrorMessage": "These Social Studies courses do not have their subjects aligned with the FLDOE Course Code Directory",
+          "SeverityLevel": 2,
+          "Resolution": "Update Ed-Fi Course Subjects in SIS",
+          "Sql": "select\n  c.EducationOrganizationId,\n  c.CourseCode,\n  c.CourseTitle,\n  d.Description as AcademicSubejctDescription\nfrom\n  edfi.Course c\n  left join edfi.AcademicSubjectDescriptor asd on c.AcademicSubjectDescriptorId = asd.AcademicSubjectDescriptorId\n  left join edfi.AcademicSubjectType AST on ast.AcademicSubjectTypeId = ASd.AcademicSubjectTypeId\n  left join edfi.Descriptor d on d.DescriptorId = asd.AcademicSubjectDescriptorId\nWhere\n  AST.AcademicSubjectTypeId not in (9)\n  and SUBSTRING(CourseCode, 1, 3) != '000'\n  and (\n    SUBSTRING(CourseCode, 11, 2) = '21'\n    or SUBSTRING(CourseCode, 11, 4) = '5021'\n  )\norder by\n  c.EducationOrganizationId,\n  C.CourseTitle,\n  C.CourseCode,\n  D.Description",
+          "Version": "6",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 10000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Attendance",
+      "Description": "Attendance",
+      "Rules": [
+        {
+          "Name": "Student with No Attendance Data",
+          "Description": "Find students that are enrolled and have no daily attendance data for that school",
+          "ErrorMessage": "Students that are enrolled and have no daily attendance data for that school",
+          "SeverityLevel": 1,
+          "Resolution": "",
+          "Sql": "select\n  ssa.SchoolId as EducationOrganizationId,\n  ssa.SchoolId,\n  ssa.PrimarySchool,\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE s.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId',\n  ssa.EntryDate,\n  ssa.ExitWithdrawDate\nFROM\n  edfi.StudentSchoolAssociation ssa\n  JOIN edfi.Student s on s.StudentUSI = ssa.StudentUSI\n  LEFT JOIN edfi.StudentSchoolAttendanceEvent ssae on ssa.schoolId = ssae.SchoolId\n  and ssa.StudentUSI = ssae.StudentUSI\n  and ssa.SchoolYear = ssae.SchoolYear\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON s.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  ssa.SchoolId not like '%9998'\n  and ssa.SchoolId not like '%9997'\n  and ssa.SchoolId not like '%9995'\n  and ssa.SchoolId not like '%9999'\n  and ssa.SchoolId not like '%3518'\n  and ssa.SchoolId not like '%3900'\n  and ssa.SchoolId not like '%7001'\n  and ssa.SchoolId not like '%7004'\n  and ssa.SchoolId not like '%7023'\n  and ssa.SchoolId != '40171'\n  and ssae.studentUSI is null\n  and (\n    ssa.EntryDate <> ssa.ExitWithdrawDate\n    or ssa.ExitWithdrawDate is null\n  )\n  and ssa.PrimarySchool = 1\norder by\n  ssa.SchoolId,\n  StudentUniqueId",
+          "Version": "19",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Discipline",
+      "Description": "Discipline",
+      "Rules": [
+        {
+          "Name": "Discipline Incident Missing Behavior",
+          "Description": "Find all discipline incidents that do not have associated behavior",
+          "ErrorMessage": "These discipline incidents do not have associated behavior",
+          "SeverityLevel": 1,
+          "Resolution": "Ensure the offense codes are being used on the incident record",
+          "Sql": "select\n  di.SchoolId as educationOrganizationId,\n  di.SchoolId,\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE s.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId',\n  di.IncidentIdentifier,\n  di.IncidentIdentifier AS 'Discriminator',\n  di.IncidentDate,\n  sdiab.BehaviorDetailedDescription,\n  d.[Description] as 'BehaviorDescriptorDescription'\nFrom\n  edfi.DisciplineIncident di\n  left join edfi.StudentDisciplineIncidentAssociationBehavior sdiab on di.IncidentIdentifier = sdiab.IncidentIdentifier\n  left join edfi.Descriptor d on sdiab.BehaviorDescriptorId = d.DescriptorId\n  left join edfi.student s on sdiab.StudentUSI = s.StudentUSI\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON s.[StudentUSI] = fleid.[StudentUSI]\nWhere\n  sdiab.BehaviorDescriptorId is null",
+          "Version": "8",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 1000000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Student Program",
+      "Description": "Student Program",
+      "Rules": [
+        {
+          "Name": "Limited English Proficency Student not in ESL Program",
+          "Description": "Show all students that are identified as having limited english proficency and are NOT enrolled in an ESL program",
+          "ErrorMessage": "Students that are identified as having limited english proficency and are NOT enrolled in an ESL program",
+          "SeverityLevel": 1,
+          "Resolution": "Ensure that these students are in an ESL based program.",
+          "Sql": "WITH CTE_studentProgram (\n  StudentUSI,\n  EducationOrganizationId,\n  ProgramName,\n  ProgramEducationOrganizationId,\n  ProgramTypeDescriptor\n) as (\n  Select\n    StudentUSI,\n    StudentProgramAssociation.EducationOrganizationId,\n    Program.ProgramName,\n    StudentProgramAssociation.ProgramEducationOrganizationId,\n    ProgramTypeDescriptor.codeValue as ProgramTypeDescriptor\n  FROM\n    edfi.StudentProgramAssociation\n    JOIN edfi.program on StudentProgramAssociation.ProgramEducationOrganizationId = program.EducationOrganizationId\n    and StudentProgramAssociation.ProgramName = program.programName\n    JOIN edfi.Descriptor as ProgramTypeDescriptor on ProgramTypeDescriptor.DescriptorId = program.ProgramTypeDescriptorId\n)\nselect\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE s.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId',\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  s.BirthDate,\n  ssa.SchoolId as EducationOrganizationId,\n  ssa.SchoolId,\n  ssa.EntryDate,\n  ssa.ExitWithdrawDate,\n  d.CodeValue as LimtedEnglishProficiency\nFROM\n  edfi.Student s\n  JOIN edfi.StudentEducationOrganizationAssociation on StudentEducationOrganizationAssociation.StudentUSI = s.StudentUSI\n  JOIN edfi.descriptor d on StudentEducationOrganizationAssociation.LimitedEnglishProficiencyDescriptorId = d.descriptorId\n  LEFT JOIN CTE_studentProgram on CTE_studentProgram.StudentUSI = StudentEducationOrganizationAssociation.StudentUSI\n  and CTE_studentProgram.EducationOrganizationId = StudentEducationOrganizationAssociation.EducationOrganizationId\n  and CTE_studentProgram.ProgramTypeDescriptor like '%ESL%'\n  LEFT JOIN edfi.StudentSchoolAssociation ssa on ssa.StudentUSI = s.StudentUSI\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON s.[StudentUSI] = fleid.[StudentUSI]\nWhere\n  CTE_studentProgram.StudentUSI IS NULL\n  and ssa.ExitWithdrawDate is null\n  and d.CodeValue = 'Limited'\nORDER BY\n  SchoolId,\n  LastSurname,\n  FirstName,\n  MiddleName,\n  EntryDate",
+          "Version": "9",
+          "ExternalRuleId": null,
+          "MaxNumberResults": null,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Staff",
+      "Description": "Staff",
+      "Rules": [
+        {
+          "Name": "Staff Missing Separation Reason",
+          "Description": "Staff has an end date, but not a separation reason",
+          "ErrorMessage": "Staff has an end date, but not a withdraw reason",
+          "SeverityLevel": 1,
+          "Resolution": "Input a separation reason in the source system",
+          "Sql": "select\n  stf.StaffUniqueId,\n  seoea.EducationOrganizationId,\n  seoea.EducationOrganizationId as SchoolId,\n  eo.NameOfInstitution,\n  seoea.EndDate\nFROM\n  edfi.Staff stf\n  JOIN edfi.StaffEducationOrganizationEmploymentAssociation seoea on stf.StaffUSI = seoea.StaffUSI\n  LEFT JOIN edfi.EducationOrganization eo on eo.EducationOrganizationId = seoea.EducationOrganizationId\nWHERE\n  endDate is not null\n  and SeparationReasonDescriptorId is null\nORDER BY\n  EducationOrganizationId",
+          "Version": "7",
+          "ExternalRuleId": null,
+          "MaxNumberResults": null,
+          "Tags": []
+        },
+        {
+          "Name": "Staff Missing Employment",
+          "Description": "Show all staff that have an assignment but no enployement association with that school or district",
+          "ErrorMessage": "Staff that have an assignment but no enployement association with that school or district",
+          "SeverityLevel": 1,
+          "Resolution": "Verify in the source HR system that the employee has the correct employment records. If the employee looks correct, then reach out to NEFEC to make sure the script that is pulling the HR data is configured correctly.",
+          "Sql": "select\n  stf.StaffUniqueId,\n  seoaa.EducationOrganizationId,\n  seoaa.EducationOrganizationId as SchoolId,\n  eo.NameOfInstitution,\n  seoaa.PositionTitle,\n  d.CodeValue as StateJobCode,\n  d.Description as StateJobDescription\nFROM\n  edfi.Staff stf\n  JOIN edfi.StaffEducationOrganizationAssignmentAssociation seoaa on stf.StaffUSI = seoaa.StaffUSI\n  left join edfi.school on seoaa.EducationOrganizationId = school.SchoolId\n  left join edfi.StaffEducationOrganizationEmploymentAssociation seoea on seoaa.StaffUSI = seoea.StaffUSI\n  and (\n    seoaa.EducationOrganizationId = seoea.EducationOrganizationId\n    or school.LocalEducationAgencyId = seoea.EducationOrganizationId\n  )\n  left join edfi.Descriptor d on d.DescriptorId = seoaa.StaffClassificationDescriptorId\n  LEFT JOIN edfi.EducationOrganization eo on eo.EducationOrganizationId = seoaa.EducationOrganizationId\nwhere\n  seoea.StaffUSI is null\n  and seoaa.PositionTitle not like '%Supple%'",
+          "Version": "9",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 100000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Student Enrollment",
+      "Description": "Student Enrollment",
+      "Rules": [],
+      "Tags": []
+    },
+    {
+      "Name": "Student Demographics",
+      "Description": "Student Demographics",
+      "Rules": [
+        {
+          "Name": "Student Missing Parents",
+          "Description": "Student does not have a parent relationship defined",
+          "ErrorMessage": "Student does not have a parent relationship defined",
+          "SeverityLevel": 1,
+          "Resolution": null,
+          "Sql": "SELECT\n  0 educationOrganizationId,\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE student.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId'\nFROM\n  edfi.Student\n  left join edfi.StudentParentAssociation on Student.StudentUSI = StudentParentAssociation.StudentUSI\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON student.[StudentUSI] = fleid.[StudentUSI]",
+          "Version": "4",
+          "ExternalRuleId": null,
+          "MaxNumberResults": null,
+          "Tags": []
+        },
+        {
+          "Name": "Student Not Associated with Ed Org",
+          "Description": "Show Students that are associated with a school but not an Education Organization",
+          "ErrorMessage": "Students that are associated with a school but not an Education Organization",
+          "SeverityLevel": 3,
+          "Resolution": null,
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE student.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId',\n  StudentSchoolAssociation.SchoolId\nFrom\n  Edfi.Student\n  JOIN Edfi.StudentSchoolAssociation on student.StudentUSI = StudentSchoolAssociation.StudentUSI\n  JOIN Edfi.School on StudentSchoolAssociation.SchoolId = SChool.SchoolId\n  LEFT JOIN EdFi.StudentEducationOrganizationAssociation on StudentEducationOrganizationAssociation.StudentUSI = StudentSchoolAssociation.StudentUSI\n  AND (\n    StudentEducationOrganizationAssociation.EducationOrganizationId = StudentSchoolAssociation.SchoolId\n    OR StudentEducationOrganizationAssociation.EducationOrganizationId = SChool.LocalEducationAgencyId\n  )\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON student.[StudentUSI] = fleid.[StudentUSI]\nWHERE\n  StudentEducationOrganizationAssociation.StudentUSI IS NULL",
+          "Version": "4",
+          "ExternalRuleId": null,
+          "MaxNumberResults": null,
+          "Tags": []
+        },
+        {
+          "Name": "Student Missing Identification Code",
+          "Description": "Student does not have the same identification code types as other students with the same Education Organization Id",
+          "ErrorMessage": "Student does not have the same identification code types as other students with the same Education Organization Id",
+          "SeverityLevel": 1,
+          "Resolution": null,
+          "Sql": "WITH CTE_IdentificationSystems (\n  StudentIdentificationSystemDescriptorId,\n  EducationOrganizationId,\n  CodeValue\n) AS (\n  SELECT\n    StudentIdentificationSystemDescriptorId,\n    EducationOrganizationId,\n    CodeValue\n  FROM\n    EdFi.StudentEducationOrganizationAssociationStudentIdentificationCode\n    JOIN EdFi.Descriptor on StudentIdentificationSystemDescriptorId = DescriptorId\n  GROUP by\n    StudentIdentificationSystemDescriptorId,\n    EducationOrganizationId,\n    CodeValue\n  HAVING\n    COUNT(*) > 10\n)\nSELECT\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE student.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId',\n  StudentEducationOrganizationAssociation.EducationOrganizationId,\n  CodeValue StudentIdentificationSystem\nFROM\n  EdFi.Student\n  JOIN EdFi.StudentEducationOrganizationAssociation on Student.StudentUSI = StudentEducationOrganizationAssociation.StudentUSI\n  CROSS JOIN CTE_IdentificationSystems\n  LEFT JOIN edfi.StudentEducationOrganizationAssociationStudentIdentificationCode on StudentEducationOrganizationAssociationStudentIdentificationCode.StudentUSI = StudentEducationOrganizationAssociation.StudentUSI\n  AND StudentEducationOrganizationAssociationStudentIdentificationCode.EducationOrganizationId = StudentEducationOrganizationAssociation.EducationOrganizationId\n  AND StudentEducationOrganizationAssociationStudentIdentificationCode.StudentIdentificationSystemDescriptorId = CTE_IdentificationSystems.StudentIdentificationSystemDescriptorId\n  AND StudentEducationOrganizationAssociationStudentIdentificationCode.EducationOrganizationId = CTE_IdentificationSystems.EducationOrganizationId\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON student.[StudentUSI] = fleid.[StudentUSI]\nWHERE\n  StudentEducationOrganizationAssociationStudentIdentificationCode.StudentUSI IS NULL",
+          "Version": "4",
+          "ExternalRuleId": null,
+          "MaxNumberResults": null,
+          "Tags": []
+        },
+        {
+          "Name": "Student Missing Telephone Number",
+          "Description": "Show students that do not have at least one associated Telephone number",
+          "ErrorMessage": "Students that do not have at least one associated Telephone number",
+          "SeverityLevel": 2,
+          "Resolution": "",
+          "Sql": "select\n  StudentEducationOrganizationAssociation.EducationOrganizationId,\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE student.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId',\n  student.LastSurname\nFROM\n  edfi.Student\n  JOIN edfi.StudentEducationOrganizationAssociation on student.studentUSI = StudentEducationOrganizationAssociation.StudentUSI\n  LEFT JOIN edfi.StudentEducationOrganizationAssociationTelephone on StudentEducationOrganizationAssociationTelephone.StudentUSI = Student.StudentUSI\n  and StudentEducationOrganizationAssociationTelephone.EducationOrganizationId = StudentEducationOrganizationAssociation.EducationOrganizationId\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON student.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  StudentEducationOrganizationAssociationTelephone.StudentUSI is null",
+          "Version": "4",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 100,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Student Course Enrollment",
+      "Description": "Student Course Enrollment",
+      "Rules": [
+        {
+          "Name": "School Has Less Than 20 Students",
+          "Description": "Find schools that have less than 20 students",
+          "ErrorMessage": "Schools that have less than 20 students",
+          "SeverityLevel": 1,
+          "Resolution": null,
+          "Sql": "--every school should have at least 20 students enrolled\nselect\n  s.SchoolId as EducationOrganizationId,\n  count(ssa.studentUSI) as StudentCount\nfrom\n  edfi.School s\n  LEFT JOIN edfi.StudentSchoolAssociation ssa on s.schoolId = ssa.schoolId\nWHERE\n  ssa.SchoolId not like '%9998'\n  and ssa.SchoolId not like '%9997'\n  and ssa.SchoolId not like '%9995'\n  and ssa.SchoolId not like '%9999'\n  and ssa.SchoolId not like '%3518'\n  and ssa.SchoolId not like '%3900'\n  and ssa.SchoolId not like '%7001'\n  and ssa.SchoolId not like '%7004'\n  and ssa.SchoolId not like '%7023'\ngroup by\n  s.schoolId\nhaving\n  count(ssa.studentUSI) < 20;",
+          "Version": "5",
+          "ExternalRuleId": null,
+          "MaxNumberResults": null,
+          "Tags": []
+        },
+        {
+          "Name": "Student Not Associated with an Education Organization",
+          "Description": "Show all students not associated with an Education Organization",
+          "ErrorMessage": "Students not associated with an Education Organization",
+          "SeverityLevel": 1,
+          "Resolution": null,
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID]\n      ELSE s.StudentUniqueId\n    END\n  ) AS 'StudentUniqueId',\n  seoa.EducationOrganizationId StudentEducationOrganizationAssociation_EdOrgId,\n  ssa.SchoolId as EducationOrganizationId,\n  ssa.SchoolId as StudentSchoolAssociation_SchoolId,\n  ssa.EntryDate,\n  ssa.ExitWithdrawDate\nFrom\n  Edfi.Student s\n  LEFT JOIN Edfi.StudentEducationOrganizationAssociation seoa on s.StudentUSI = seoa.StudentUSI\n  LEFT JOIN edfi.StudentSchoolAssociation ssa on ssa.StudentUSI = s.StudentUSI\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI],\n      seoasic.[IdentificationCode] AS 'FLEID'\n    FROM\n      [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n      INNER JOIN [edfi].[Descriptor] d ON seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n    WHERE\n      seoasic.[AssigningOrganizationIdentificationCode] IN ('State')\n      AND d.[CodeValue] IN ('State', 'FLEID')\n      AND seoasic.[IdentificationCode] LIKE 'FL%'\n      AND LEN(seoasic.[IdentificationCode]) = 14\n  ) fleid ON s.[StudentUSI] = fleid.[StudentUSI]\nWHERE\n  seoa.StudentUSI IS NULL;",
+          "Version": "6",
+          "ExternalRuleId": "",
+          "MaxNumberResults": null,
+          "Tags": []
+        },
+        {
+          "Name": "Enrollment Date in Future",
+          "Description": "A student is showing to be enrolled on a date in the future",
+          "ErrorMessage": "Student is showing to be enrolled on a date in the future",
+          "SeverityLevel": 1,
+          "Resolution": "Verify the student's enrollment record has the correct entry date",
+          "Sql": "select\n  (CASE WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID] ELSE s.StudentUniqueId END) AS 'StudentUniqueId',\n  ssa.SchoolId as EducationOrganizationId,\n  ssa.SchoolId,\n  d.CodeValue as EntryTypeCodeValue,\n  d.Description as EntryTypeDescription,\n  ssa.EntryDate,\n  ssa.ExitWithdrawDate\nFROM\n  edfi.StudentSchoolAssociation ssa\n  INNER JOIN edfi.Student s on s.StudentUSI = ssa.StudentUSI\n  INNER JOIN edfi.Descriptor d on d.DescriptorId = ssa.EntryTypeDescriptorId\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI]\n     ,seoasic.[IdentificationCode] AS 'FLEID'\n\n    FROM [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n    INNER JOIN [edfi].[Descriptor] d ON\n     seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n\n    WHERE\n     seoasic.[AssigningOrganizationIdentificationCode] IN ('State') AND\n     d.[CodeValue] IN ('State','FLEID') AND\n     seoasic.[IdentificationCode] LIKE 'FL%' AND\n     LEN(seoasic.[IdentificationCode]) = 14\n) fleid ON\n s.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  ssa.EntryDate > getdate();",
+          "Version": "6",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Students Leaving Class After it is Over",
+          "Description": "This check finds students where their association with the section ends after the class is over",
+          "ErrorMessage": "Students where their association with the section ends after the class is over",
+          "SeverityLevel": 2,
+          "Resolution": "Make sure the Session, Section, and Student Section dates are correct in the source system",
+          "Sql": "select\n  sec.SchoolId as EducationOrganizationId,\n  sec.SchoolId,\n  (CASE WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID] ELSE s.StudentUniqueId END) AS 'StudentUniqueId',\n  --sseca.BeginDate StudentSectionAssociationBeginDate,\n  co.CourseCode,\n  sseca.SectionIdentifier,\n  co.LocalCourseTitle,\n  --ses.beginDate SessionBeginDate,\n  ses.EndDate as Session_EndDate,\n  sseca.EndDate as StudentSectionAssociation_EndDate\nFROM\n  edfi.StudentSectionAssociation sseca\n  JOIN edfi.section sec on sseca.SchoolId = sec.SchoolId\n  and sseca.LocalCourseCode = sec.LocalCourseCode\n  and sseca.SchoolYear = sec.SchoolYear\n  and sec.SectionIdentifier = sseca.SectionIdentifier\n  and sec.SessionName = sseca.SessionName\n  JOIN edfi.courseOffering co on sec.SchoolId = co.SchoolId\n  and sec.LocalCourseCode = co.LocalCourseCode\n  and sec.SchoolYear = co.SchoolYear\n  and co.SessionName = sec.SessionName\n  JOIN edfi.session ses on co.SchoolId = ses.SchoolId\n  and ses.SchoolYear = co.SchoolYear\n  and ses.SessionName = co.SessionName\n  JOIN edfi.Student s on s.StudentUSI = sseca.StudentUSI\nLEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI]\n     ,seoasic.[IdentificationCode] AS 'FLEID'\n\n    FROM [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n    INNER JOIN [edfi].[Descriptor] d ON\n     seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n\n    WHERE\n     seoasic.[AssigningOrganizationIdentificationCode] IN ('State') AND\n     d.[CodeValue] IN ('State','FLEID') AND\n     seoasic.[IdentificationCode] LIKE 'FL%' AND\n     LEN(seoasic.[IdentificationCode]) = 14\n) fleid ON\n s.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  sseca.EndDate > ses.EndDate\norder by\n  SchoolId,\n  CourseCode,\n  SectionIdentifier",
+          "Version": "5",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Student Enrolled in a Class Before it Begins",
+          "Description": "This check finds students that are associated with a class section on a date that is before the section begins.",
+          "ErrorMessage": "Students that are associated with a class section on a date that is before the section begins",
+          "SeverityLevel": 2,
+          "Resolution": "Make sure the Session, Section, and Student Section dates are correct in the source system",
+          "Sql": "select\n  sec.SchoolId as EducationOrganizationId,\n  sec.SchoolId,\n  (CASE WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID] ELSE s.StudentUniqueId END) AS 'StudentUniqueId',\n  --sseca.BeginDate StudentSectionAssociationBeginDate,\n  co.CourseCode,\n  sseca.SectionIdentifier,\n  co.LocalCourseTitle,\n  --ses.beginDate SessionBeginDate,\n  ses.EndDate as Session_EndDate,\n  sseca.EndDate as StudentSectionAssociation_EndDate\nFROM\n  edfi.StudentSectionAssociation sseca\n  JOIN edfi.section sec on sseca.SchoolId = sec.SchoolId\n  and sseca.LocalCourseCode = sec.LocalCourseCode\n  and sseca.SchoolYear = sec.SchoolYear\n  and sec.SectionIdentifier = sseca.SectionIdentifier\n  and sec.SessionName = sseca.SessionName\n  JOIN edfi.courseOffering co on sec.SchoolId = co.SchoolId\n  and sec.LocalCourseCode = co.LocalCourseCode\n  and sec.SchoolYear = co.SchoolYear\n  and co.SessionName = sec.SessionName\n  JOIN edfi.session ses on co.SchoolId = ses.SchoolId\n  and ses.SchoolYear = co.SchoolYear\n  and ses.SessionName = co.SessionName\n  JOIN edfi.Student s on s.StudentUSI = sseca.StudentUSI\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI]\n     ,seoasic.[IdentificationCode] AS 'FLEID'\n\n    FROM [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n    INNER JOIN [edfi].[Descriptor] d ON\n     seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n\n    WHERE\n     seoasic.[AssigningOrganizationIdentificationCode] IN ('State') AND\n     d.[CodeValue] IN ('State','FLEID') AND\n     seoasic.[IdentificationCode] LIKE 'FL%' AND\n     LEN(seoasic.[IdentificationCode]) = 14\n) fleid ON\n s.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  sseca.BeginDate < ses.BeginDate\norder by\n  SchoolId,\n  CourseCode,\n  SectionIdentifier",
+          "Version": "5",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 100,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Ed Orgs",
+      "Description": "Ed Orgs",
+      "Rules": [
+        {
+          "Name": "School Is Not Offering Courses",
+          "Description": "Every school should have at least 1 course offering",
+          "ErrorMessage": "School does not have any course offerings",
+          "SeverityLevel": 1,
+          "Resolution": "Confirm whether or not the school schould be offerning courses in the source system",
+          "Sql": "select\n  sch.SchoolId EducationOrganizationId,\n  sch.SchoolId,\n  eo.NameOfInstitution,\n  count(co.CourseCode) as CourseOfferingCount\nfrom\n  edfi.School sch\n  LEFT JOIN edfi.CourseOffering co on sch.schoolId = co.schoolId\n  LEFT JOIN edfi.EducationOrganization eo on eo.EducationOrganizationId = sch.SchoolId\nwhere\n  sch.SchoolId not like '%9001'\ngroup by\n  sch.schoolId,\n  eo.NameOfInstitution\nhaving\n  count(co.CourseCode) < 1;",
+          "Version": "6",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "School Has No Staff Assignments",
+          "Description": "Identifying schools that do not have staff assignments.",
+          "ErrorMessage": "School does not have any staff assignments",
+          "SeverityLevel": 1,
+          "Resolution": "Confirm whether or not the school should have staff assignments",
+          "Sql": "select\n  sch.SchoolId EducationOrganizationId,\n  sch.SchoolId,\n  eo.NameOfInstitution,\n  count(seoaa.StaffUSI) as StaffAssignmentCount\nfrom\n  edfi.School sch\n  LEFT JOIN edfi.StaffEducationOrganizationAssignmentAssociation seoaa on sch.schoolId = seoaa.EducationOrganizationId\n  LEFT JOIN edfi.EducationOrganization eo on eo.EducationOrganizationId = sch.SchoolId\nWHERE\n  sch.SchoolId not like '%0000'\ngroup by\n  sch.schoolId,\n  eo.NameOfInstitution\nhaving\n  count(seoaa.StaffUSI) < 1;",
+          "Version": "5",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Education Organization Missing Address",
+          "Description": "Education Organization missing address",
+          "ErrorMessage": "Education Organization Missing Address",
+          "SeverityLevel": 1,
+          "Resolution": "Add the address to the missing school in the source system",
+          "Sql": "select\n  eo.EducationOrganizationId,\n  eo.NameOfInstitution,\n  d.Description as AddressTypeDescription,\n  eoa.City,\n  eoa.EducationOrganizationId,\n  eoa.PostalCode,\n  d2.Description as State,\n  eoa.StreetNumberName,\n  eoa.NameOfCounty\n\nFROM\n  edfi.EducationOrganization eo\n  LEFT JOIN edfi.EducationOrganizationAddress eoa on eo.EducationOrganizationId = eoa.EducationOrganizationId\n  left join edfi.Descriptor d on d.DescriptorId=eoa.AddressTypeDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId=eoa.StateAbbreviationDescriptorId\nwhere\n  eoa.EducationOrganizationId is null",
+          "Version": "4",
+          "ExternalRuleId": null,
+          "MaxNumberResults": null,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Program Services",
+      "Description": "Program Services",
+      "Rules": [
+        {
+          "Name": "Homeless Student Not Getting Services",
+          "Description": "Show students in a homeless program that are not getting services",
+          "ErrorMessage": "Students are in a homeless program but are not getting services",
+          "SeverityLevel": 1,
+          "Resolution": "Ensure the student is getting the appropriate services",
+          "Sql": "Select\n  (CASE WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID] ELSE s.StudentUniqueId END) AS 'StudentUniqueId',\n  ssa.SchoolId as EducationOrganizationId,\n  ssa.SchoolId,\n  d.Description as StudentCharacteristicDescription,\n  shpa.BeginDate as StudentHomelessProgramAssociation_BeginDate,\n  shpa.AwaitingFosterCare,\n  d2.codeValue as StudentHomelessProgramAssociation_ProgramTypeDescriptor,\n  shpahps.BeginDate\nFROM\n  edfi.Student s\n  left join edfi.StudentSchoolAssociation ssa on ssa.StudentUSI = s.StudentUSI\n  inner join edfi.StudentEducationOrganizationAssociationStudentCharacteristic seoasc on seoasc.StudentUSI = s.StudentUSI\n  inner join edfi.Descriptor d on d.DescriptorId = seoasc.StudentCharacteristicDescriptorId\n  left join edfi.StudentHomelessProgramAssociation shpa on shpa.StudentUSI = s.StudentUSI\n  left JOIN edfi.Descriptor d2 on d2.DescriptorId = shpa.ProgramTypeDescriptorId\n  left join edfi.StudentHomelessProgramAssociationHomelessProgramService shpahps on shpahps.StudentUSI = shpa.StudentUSI\n  LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI]\n     ,seoasic.[IdentificationCode] AS 'FLEID'\n\n    FROM [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n    INNER JOIN [edfi].[Descriptor] d ON\n     seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n\n    WHERE\n     seoasic.[AssigningOrganizationIdentificationCode] IN ('State') AND\n     d.[CodeValue] IN ('State','FLEID') AND\n     seoasic.[IdentificationCode] LIKE 'FL%' AND\n     LEN(seoasic.[IdentificationCode]) = 14\n) fleid ON\n s.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  d.Description like '%Homeless%'\n  and shpahps.BeginDate is null",
+          "Version": "4",
+          "ExternalRuleId": "",
+          "MaxNumberResults": 1000000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    }
+  ],
+  "Tags": [],
+  "DestinationTable": "EdFiRuleExecutionLogDetails",
+  "DestinationStructure": "[{\"Name\":\"id\",\"Type\":\"int\",\"IsNullable\":false},{\"Name\":\"educationorganizationid\",\"Type\":\"int\",\"IsNullable\":true},{\"Name\":\"studentuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"coursecode\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"discriminator\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"programname\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"staffuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"otherdetails\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"ruleexecutionlogid\",\"Type\":\"int\",\"IsNullable\":false}]"
+}

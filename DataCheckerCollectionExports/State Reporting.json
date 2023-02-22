@@ -1,0 +1,175 @@
+{
+  "Name": "State Reporting",
+  "Description": "Collection of scripts surfacing state reporting issues. ",
+  "EnvironmentType": "Ed-Fi v2.X",
+  "Containers": [
+    {
+      "Name": "Student Discipline/Resultant Action",
+      "Description": "Discipline scripts",
+      "Rules": [
+        {
+          "Name": "ISS Action Issue",
+          "Description": "If the Discipline/Resultant Action code is I, then Duration, Discipline Action\nmust be greater than zero and less than or equal to 10.",
+          "ErrorMessage": "If the Discipline/Resultant Action code is I, then Duration, Discipline Action must be greater than zero and less than or equal to 10.",
+          "SeverityLevel": 2,
+          "Resolution": "If the rejected record should not have been submitted, no action is required. However, if the district wishes the data in the rejected record to be loaded to the database, the district must correct the Duration, Discipline Action or the Discipline/Resultant Action Code and resubmit the record.",
+          "Sql": "SELECT\n  s.StudentUniqueId,\n  s.LastSurname,\n  s.Firstname,\n  s.MiddleName,\n  da.[DisciplineActionIdentifier],\n  d.CodeValue AS Action,\n  d.ShortDescription AS DisciplineActionSkyward,\n  dt.CodeValue AS DisciplineActionEdFi,\n  da.[DisciplineDate],\n  [DisciplineActionLength],\n  [ActualDisciplineActionLength],\n  [ResponsibilitySchoolId] as EducationOrganizationId,\n  [ResponsibilitySchoolId] as SchoolId,\n  lea.LocalEducationAgencyId,\n  da.LastModifiedDate\nFROM\n  [edfi].[DisciplineAction] da\n  INNER JOIN [edfi].[DisciplineActionDiscipline] dad ON da.DisciplineActionIdentifier = dad.DisciplineActionIdentifier\n  AND da.StudentUSI = dad.StudentUSI\n  INNER JOIN [edfi].DisciplineDescriptor dd ON DAD.DisciplineDescriptorId = dd.DisciplineDescriptorId\n  INNER JOIN [edfi].DisciplineType dt ON dd.DisciplineTypeId = dt.DisciplineTypeId\n  INNER JOIN [edfi].Descriptor d ON DAD.DisciplineDescriptorId = d.DescriptorId\n  LEFT JOIN (\n    SELECT\n      t.StudentUSI,\n      t.EntryDate,\n      ssa.ExitWithdrawDate,\n      sch.LocalEducationAgencyId\n    FROM\n      (\n        SELECT\n          t1.StudentUSI,\n          t1.EntryDate,\n          ExitWithdrawDate\n        FROM\n          (\n            SELECT\n              ssa1.StudentUSI,\n              ssa1.EntryDate,\n              nullif(\n                max(coalesce(ssa.ExitWithdrawDate, '9999-01-01')),\n                '9999-01-01'\n              ) AS ExitWithdrawDate\n            FROM\n              (\n                SELECT\n                  [StudentUSI],\n                  MAX([EntryDate]) as EntryDate\n                FROM\n                  [edfi].[StudentSchoolAssociation]\n                GROUP BY\n                  [StudentUSI]\n              ) ssa1\n              LEFT JOIN [edfi].[StudentSchoolAssociation] ssa ON ssa1.StudentUSI = ssa.StudentUSI\n              AND ssa1.EntryDate = ssa.EntryDate\n            GROUP BY\n              ssa1.StudentUSI,\n              ssa1.EntryDate\n          ) t1\n      ) t\n      LEFT JOIN [edfi].[StudentSchoolAssociation] ssa ON T.StudentUSI = ssa.StudentUSI\n      AND t.EntryDate = ssa.EntryDate\n      AND ISNULL (t.ExitWithdrawDate, '9999-01-01') = ISNULL(ssa.ExitWithdrawDate, '9999-01-01')\n      LEFT JOIN [edfi].[School] sch ON ssa.SchoolId = sch.SchoolId\n    GROUP BY\n      t.StudentUSI,\n      t.EntryDate,\n      ssa.ExitWithdrawDate,\n      sch.LocalEducationAgencyId\n  ) lea ON da.StudentUSI = lea.StudentUSI\n  LEFT JOIN edfi.Student s ON s.StudentUSI = lea.StudentUSI\n LEFT OUTER JOIN (\n    SELECT\n      sic.[StudentUSI]\n     ,sic.[IdentificationCode] AS 'FLEID'\n\n    FROM [edfi].[StudentIdentificationCode] sic\n    INNER JOIN [edfi].[Descriptor] d ON\n     sic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n\n    WHERE\n     sic.[AssigningOrganizationIdentificationCode] IN ('State') AND\n     d.[CodeValue] IN ('State','FLEID') AND\n     sic.[IdentificationCode] LIKE 'FL%' AND\n     LEN(sic.[IdentificationCode]) = 14\n) fleid ON\n s.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  dt.CodeValue = 'In School Suspension'\n  and (\n    DisciplineActionLength = 0\n    OR DisciplineActionLength > 10\n  )\nORDER BY\n  s.LastSurname,\n  LocalEducationAgencyId,\n  LastModifiedDate DESC;",
+          "Version": "10",
+          "ExternalRuleId": "19",
+          "MaxNumberResults": 5000,
+          "Tags": []
+        },
+        {
+          "Name": "Hours Used in Action",
+          "Description": "Hours were entered into Skyward for the Action instead of using Days.",
+          "ErrorMessage": "Hours were entered into Skyward for the Action instead of using Days.",
+          "SeverityLevel": 1,
+          "Resolution": "Edit the action record and change the Total Time value from Hours to equate to Days.",
+          "Sql": "SELECT\n  (CASE WHEN fleid.[FLEID] IS NOT NULL THEN fleid.[FLEID] ELSE s.StudentUniqueId END) AS 'StudentUniqueId',\n  -- da.[StudentUSI],\n  da.[DisciplineActionIdentifier],\n  d.CodeValue AS ActionCode,\n  d.ShortDescription AS DisciplineAction,\n  -- dt.CodeValue AS DisciplineActionEdFi,\n  da.[DisciplineDate],\n  [DisciplineActionLength],\n  [ActualDisciplineActionLength],\n  [ResponsibilitySchoolId] as EducationOrganizationId,\n  [ResponsibilitySchoolId] as SchoolId,\n  lea.LocalEducationAgencyId,\n  da.LastModifiedDate\nFROM\n  [edfi].[DisciplineAction] da\n  INNER JOIN [edfi].[DisciplineActionDiscipline] dad ON da.DisciplineActionIdentifier = dad.DisciplineActionIdentifier\n  AND da.StudentUSI = dad.StudentUSI\n  INNER JOIN [edfi].DisciplineDescriptor dd ON DAD.DisciplineDescriptorId = dd.DisciplineDescriptorId --INNER JOIN [edfi].DisciplineType dt ON dd.DisciplineTypeId = dt.DisciplineTypeId\n  INNER JOIN [edfi].Descriptor d ON DAD.DisciplineDescriptorId = d.DescriptorId\n  LEFT JOIN (\n    SELECT\n      t.StudentUSI,\n      t.EntryDate,\n      ssa.ExitWithdrawDate,\n      sch.LocalEducationAgencyId\n    FROM\n      (\n        SELECT\n          t1.StudentUSI,\n          t1.EntryDate,\n          ExitWithdrawDate\n        FROM\n          (\n            SELECT\n              ssa1.StudentUSI,\n              ssa1.EntryDate,\n              nullif(\n                max(coalesce(ssa.ExitWithdrawDate, '9999-01-01')),\n                '9999-01-01'\n              ) AS ExitWithdrawDate\n            FROM\n              (\n                SELECT\n                  [StudentUSI],\n                  MAX([EntryDate]) as EntryDate\n                FROM\n                  [edfi].[StudentSchoolAssociation]\n                GROUP BY\n                  [StudentUSI]\n              ) ssa1\n              LEFT JOIN [edfi].[StudentSchoolAssociation] ssa ON ssa1.StudentUSI = ssa.StudentUSI\n              AND ssa1.EntryDate = ssa.EntryDate\n            GROUP BY\n              ssa1.StudentUSI,\n              ssa1.EntryDate\n          ) t1\n      ) t\n      LEFT JOIN [edfi].[StudentSchoolAssociation] ssa ON T.StudentUSI = ssa.StudentUSI\n      AND t.EntryDate = ssa.EntryDate\n      AND ISNULL (t.ExitWithdrawDate, '9999-01-01') = ISNULL(ssa.ExitWithdrawDate, '9999-01-01')\n      LEFT JOIN [edfi].[School] sch ON ssa.SchoolId = sch.SchoolId\n    GROUP BY\n      t.StudentUSI,\n      t.EntryDate,\n      ssa.ExitWithdrawDate,\n      sch.LocalEducationAgencyId\n  ) lea ON da.StudentUSI = lea.StudentUSI\n  LEFT JOIN edfi.Student s ON s.StudentUSI = lea.StudentUSI\n LEFT OUTER JOIN (\n    SELECT\n      seoasic.[StudentUSI]\n     ,seoasic.[IdentificationCode] AS 'FLEID'\n\n    FROM [edfi].[StudentEducationOrganizationAssociationStudentIdentificationCode] seoasic\n    INNER JOIN [edfi].[Descriptor] d ON\n     seoasic.[StudentIdentificationSystemDescriptorId] = d.[DescriptorId]\n\n    WHERE\n     seoasic.[AssigningOrganizationIdentificationCode] IN ('State') AND\n     d.[CodeValue] IN ('State','FLEID') AND\n     seoasic.[IdentificationCode] LIKE 'FL%' AND\n     LEN(seoasic.[IdentificationCode]) = 14\n) fleid ON\n s.[StudentUSI] = fleid.[StudentUSI]\nwhere\n  (\n    DisciplineActionLength > 0\n    and DisciplineActionLength < 1\n  )\nORDER BY\n  LocalEducationAgencyId,\n  SchoolId,\n  LastModifiedDate DESC;",
+          "Version": "8",
+          "ExternalRuleId": "19",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Prior School Status/Student Attendance",
+      "Description": "Prior School Status/Student Attendance",
+      "Rules": [
+        {
+          "Name": "Edit 2B",
+          "Description": "If the Entry Code is:\n    * E04, then the Prior School/Location: District/County must not be 99.\n    * E4A, then the Prior School/Location: District/County must be 99.",
+          "ErrorMessage": "Entry Code is E04 and Prior School District is 99 or Entry Code is E4A and Prior School District is not 99.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct the Prior School District value for the Entry Code.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  (\n    ssas.[EntryCode] = 'E04'\n    AND ssas.[PriorSchoolDistrict] = '99'\n  )\n  OR (\n    ssas.[EntryCode] = 'E4A'\n    AND ssas.[PriorSchoolDistrict] <> '99'\n  )",
+          "Version": "9",
+          "ExternalRuleId": "2B",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 2A",
+          "Description": " If the Entry Code is:\n     - E03, then the Prior School/Location: District/County must not be 99.\n     - E3A, then the Prior School/Location: District/County must be 99.",
+          "ErrorMessage": "Entry Code is E03 and Prior School District is 99 or Entry Code is E3A and Prior School District is not 99.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct the Prior School District value for the Entry Code.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  (\n    ssas.[EntryCode] = 'E03'\n    AND ssas.[PriorSchoolDistrict] = '99'\n  )\n  OR (\n    ssas.[EntryCode] = 'E3A'\n    AND ssas.[PriorSchoolDistrict] <> '99'\n  )",
+          "Version": "7",
+          "ExternalRuleId": "2A",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 2C",
+          "Description": "If the Entry Code is E09, then the Prior School/Location: State/Territory or Commonwealth must be ZZ.",
+          "ErrorMessage": "Entry Code is E09 and Prior School State is not ZZ.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct Prior School State value to ZZ.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  ssas.[EntryCode] = 'E09'\n  AND ssas.[PriorSchoolState] <> 'ZZ'",
+          "Version": "7",
+          "ExternalRuleId": "2C",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 14",
+          "Description": "Prior School/Location: District/County must be numeric and in the range 01-68, 71-75 or 99.",
+          "ErrorMessage": "Prior School District is an invalid district code.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct the Prior School District to a valid district code.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  ssas.[PriorSchoolDistrict] IN ('69', '70')\n  OR ssas.[PriorSchoolDistrict] BETWEEN '76'\n  AND '98'",
+          "Version": "7",
+          "ExternalRuleId": "14",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 26",
+          "Description": "If the Entry Code is E01, then the Prior School/Location: District must be the same as the District Number, Current Enrollment, the Prior School/Location: State/Territory or Commonwealth must be FL, and the Prior School/Location: \nCountry must be US.",
+          "ErrorMessage": "Entry Code is E01 and Prior School District does not match District Number, Current Enrollment, Prior School State is not FL, and/or Prior School Country is not US.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct Prior School District to match the District Number, Current Enrollment, Prior School State to FL, and/or Prior School Country to US.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  ssas.[EntryCode] = 'E01'\n  AND (\n    RIGHT(\n      '00' + CONVERT(NVARCHAR, ssas.[LocalEducationAgencyId]),\n      2\n    ) <> ssas.[PriorSchoolDistrict]\n    OR ssas.[PriorSchoolState] <> 'FL'\n    OR ssas.[PriorSchoolCountry] <> 'US'\n  )",
+          "Version": "7",
+          "ExternalRuleId": "26",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 27",
+          "Description": " If the Entry Code is:\n     - E02, then the Prior School/Location: District/County must not be 99 and must not be the same as the District Number, Current Enrollment.\n     - E2A, then the Prior School/Location: District/County must be 99",
+          "ErrorMessage": "Entry Code is E02 and Prior School District is 99 or matches the District Number, Current Enrollment, or Entry Code is E2A and Prior School District is not 99.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct the Prior School District value for the Entry Code.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  (\n    ssas.[EntryCode] = 'E02'\n    AND (\n      RIGHT(\n        '00' + CONVERT(NVARCHAR, ssas.[LocalEducationAgencyId]),\n        2\n      ) = ssas.[PriorSchoolDistrict]\n      OR ssas.[PriorSchoolDistrict] = '99'\n    )\n  )\n  OR (\n    ssas.[EntryCode] = 'E2A'\n    AND ssas.[PriorSchoolDistrict] <> '99'\n  )",
+          "Version": "7",
+          "ExternalRuleId": "27",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 28",
+          "Description": "If the Prior School/Location: District is 99 and the Prior School/Location: State/Territory or Commonwealth is ZZ, the Prior School/Location: Country may not be US and vice versa.",
+          "ErrorMessage": "Prior School District is 99, Prior School State is ZZ, and Prior School Country is US; or Prior School District is not 99 and/or Prior School State is not ZZ and Prior School Country is not US.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct Prior School District and/or Prior School State to align with Prior School Country.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  (\n    ssas.[PriorSchoolDistrict] = '99'\n    AND ssas.[PriorSchoolState] = 'ZZ'\n    AND ssas.[PriorSchoolCountry] = 'US'\n  )\n  OR (\n    (\n      ssas.[PriorSchoolDistrict] <> '99'\n      OR ssas.[PriorSchoolState] <> 'ZZ'\n    )\n    AND ssas.[PriorSchoolCountry] <> 'US'\n  )",
+          "Version": "7",
+          "ExternalRuleId": "28",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 29",
+          "Description": "If the Re-Entry Code is R01, R02, or R03, the Prior School/Location: District must be the same as the District Number, Current Enrollment.",
+          "ErrorMessage": "Entry Code is a Re-Entry Code (R01, R02, or R03) and Prior School District does not match District Number, Current Enrollment.",
+          "SeverityLevel": 3,
+          "Resolution": "Correct Prior School District to match District Number, Current Enrollment.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[SchoolId] = ssas.[SchoolId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  ssas.[EntryCode] IN ('R01', 'R02', 'R03')\n  AND (\n    RIGHT(\n      '00' + CONVERT(NVARCHAR, ssas.[LocalEducationAgencyId]),\n      2\n    ) <> ssas.[PriorSchoolDistrict]\n  )",
+          "Version": "8",
+          "ExternalRuleId": "29",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        },
+        {
+          "Name": "Edit 77",
+          "Description": "If Entry Code is E05, grade must be either PK or KG.",
+          "ErrorMessage": "Entry Code is E05 and the student's grade level is not PK (or lower) or KG.",
+          "SeverityLevel": 3,
+          "Resolution": "Change the Entry Code value for this entry record or correct the student's grade level.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE ssas.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  ssa.[EntryCode] = 'E05'\n  AND ssa.[EntryGradeLevelCode] NOT IN ('KG', 'PN', 'P0', 'P1', 'P2', 'P3', 'P4', 'PK')",
+          "Version": "4",
+          "ExternalRuleId": "77",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Student Demographics",
+      "Description": "Student Demographics",
+      "Rules": [
+        {
+          "Name": "Edit 28",
+          "Description": "If School Number, Current Enrollment is not 9995, Resident Status, State/County code must be 0, A, B, 2, 3, 4, 5, 6 or 7. If School Number, Current Enrollment = 9995, then Resident Status State/County must be Z.",
+          "ErrorMessage": "School Number, Current Enrollment is not 9995 and Resident Status is \"Z\" or School Number, Current Enrollment is 9995 and Resident Status is not \"Z\".",
+          "SeverityLevel": 3,
+          "Resolution": "Correct the Resident Status code for the student's School Number, Current Enrollment.",
+          "Sql": "SELECT\n  (\n    CASE\n      WHEN s.[FLEID] IS NOT NULL THEN s.[FLEID]\n      ELSE s.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  ssas.[LocalEducationAgencyId],\n  ssas.[SchoolId] AS 'EducationOrganizationId',\n  ssas.[SchoolId],\n  ssas.[EntryDate],\n  ssas.[EntryCode],\n  ssas.[WithdrawalDate],\n  ssas.[WithdrawalCode],\n  ssas.[PriorSchoolDistrict],\n  ssas.[PriorSchoolState],\n  ssas.[PriorSchoolCountry],\n  ssas.[ResidentStatus]\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN [Supplemental].[edfi].[Student] s ON ssa.[StudentUniqueId] = s.[StudentUniqueId] FULL\n  OUTER JOIN [Supplemental].[skyward].[StudentEntryWithdrawal] ssas ON ssa.[StudentUniqueId] = ssas.[StudentUniqueId]\n  AND ssa.[LocalEducationAgencyId] = ssas.[LocalEducationAgencyId]\n  AND ssa.[EntryDate] = ssas.[EntryDate]\nWHERE\n  (\n    [ResidentStatus] = 'Z'\n    AND RIGHT(CONVERT(VARCHAR, ssas.[SchoolId]), 4) <> '9995'\n  )\n  OR (\n    [ResidentStatus] <> 'Z'\n    AND RIGHT(CONVERT(VARCHAR, ssas.[SchoolId]), 4) = '9995'\n  )",
+          "Version": "4",
+          "ExternalRuleId": "28",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    }
+  ],
+  "Tags": [],
+  "DestinationTable": "EdFiRuleExecutionLogDetails",
+  "DestinationStructure": "[{\"Name\":\"id\",\"Type\":\"int\",\"IsNullable\":false},{\"Name\":\"educationorganizationid\",\"Type\":\"int\",\"IsNullable\":true},{\"Name\":\"studentuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"coursecode\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"discriminator\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"programname\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"staffuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"otherdetails\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"ruleexecutionlogid\",\"Type\":\"int\",\"IsNullable\":false}]"
+}

@@ -1,0 +1,67 @@
+{
+  "Name": "Student",
+  "Description": "Student",
+  "EnvironmentType": "Ed-Fi v3.X",
+  "Containers": [
+    {
+      "Name": "Student Class",
+      "Description": "Student Class",
+      "Rules": [
+        {
+          "Name": "Middle School Transcript GLOs and Course Flags",
+          "Description": "A middle school student attempting high school credit should be have a Transcript GLO of \"09\", the transcript GLO included in GPA calculations (both at either the course or student level), and have a course flag of 9 at any level (course, section, and/or student).",
+          "ErrorMessage": "A middle school student has earned credit in a high school course but their class record does not have the correct transcript GLO entered, the GLO is not included in GPA calculations, and/or does not have a course flag of 9.",
+          "SeverityLevel": 1,
+          "Resolution": "Enter a Transcript GLO value of \"09\", include the transcript GLO in GPA calculations, and/or add a course flag of 9 to the student's class record.",
+          "Sql": "SELECT\n  [LocalEducationAgencyId],\n  (CASE WHEN [FLEID] IS NOT NULL THEN [FLEID] ELSE [StudentUniqueId] END) AS 'StudentUniqueId',\n  [SchoolYear],\n  [EducationOrganizationId],\n  [LocalCourseCode] AS 'CourseCode',\n  [SectionIdentifier],\n  [SessionName] + '_' + [SectionIdentifier] + '_' + [ClassPeriodName] AS 'Discriminator',\n  [SessionName],\n  [BeginDate],\n  [EndDate],\n  [HistGradYear],\n  [HistGradeLevel],\n  [WhenTakenGradeLevelCode],\n  [AttemptedCredits],\n  [EarnedCredits],\n  [ClassPeriodName],\n  [SchdRecordType],\n  [SchdStatus],\n  [TranscriptGradeLevelOverride],\n  [IncludeGloInGpaCalculation],\n  [CourseFlagsCourse],\n  [CourseFlagsSection],\n  [CourseFlagsStudent],\n  [CourseFlags]\nFROM\n  [Supplemental].[edfi].[StudentSectionAssociation] ssa\nWHERE\n  ssa.[HistGradeLevel] IN ('06', '07', '08')\n  AND ssa.[AttemptedCredits] > 0\n  AND (\n    ssa.[TranscriptGradeLevelOverride] <> '09'\n    OR ssa.[IncludeGloInGpaCalculation] = 0\n    OR ssa.[CourseFlags] NOT LIKE '%9%'\n  )",
+          "Version": "7",
+          "ExternalRuleId": "GLO9",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Entry/Withdrawal",
+      "Description": "Entry/Withdrawal",
+      "Rules": [
+        {
+          "Name": "Multiple Open Enrollment Records",
+          "Description": "The student has more than one open enrollment record in the ODS.",
+          "ErrorMessage": "The student has more than one open enrollment record in the ODS.",
+          "SeverityLevel": 1,
+          "Resolution": "Verify enrollment within your district and, if necessary, contact the other district",
+          "Sql": "SELECT\n  ssa.[StudentUSI],\n  (\n    CASE\n      WHEN ssa.[FLEID] IS NOT NULL THEN ssa.[FLEID]\n      ELSE ssa.[StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  ssa.[LocalEducationAgencyId],\n  ssa.[EducationOrganizationId],\n  ssa.[SchoolId],\n  ssa.[EntryDate],\n  ssa.[EntryCode],\n  ssa.[ExitWithdrawDate],\n  ssa.[WithdrawalCode],\n  ssa.[EntryGradeLevelCode],\n  ssa2.[LocalEducationAgencyId] as 'OtherDistrictCode',\n  ssa2.[EducationOrganizationId] as 'OtherSchoolCode'\nFROM\n  [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n  INNER JOIN (\n    SELECT\n      [StudentUniqueId],\n      [LocalEducationAgencyId],\n      [EducationOrganizationId]\n    FROM\n      [Supplemental].[edfi].[StudentSchoolAssociation] ssa\n    WHERE\n      ssa.[StudentUniqueId] IN (\n        SELECT\n          [StudentUniqueId]\n        FROM\n          [Supplemental].[edfi].[StudentSchoolAssociation]\n        WHERE\n          [ExitWithdrawDate] IS NULL\n        GROUP BY\n          [StudentUniqueId]\n        HAVING\n          COUNT(*) > 1\n      )\n      AND ssa.[ExitWithdrawDate] IS NULL\n  ) ssa2 ON ssa.[StudentUniqueId] = ssa2.[StudentUniqueId]\n  AND ssa.[EducationOrganizationId] <> ssa2.[EducationOrganizationId]\nWHERE\n  ssa.[StudentUniqueId] IN (\n    SELECT\n      [StudentUniqueId]\n    FROM\n      [Supplemental].[edfi].[StudentSchoolAssociation]\n    WHERE\n      [ExitWithdrawDate] IS NULL AND\n      [EntryDate] < CURRENT_TIMESTAMP\n    GROUP BY\n      [StudentUniqueId]\n    HAVING\n      COUNT(*) > 1\n  )\n  AND ssa.[ExitWithdrawDate] IS NULL\n  AND ssa.[PrimarySchool] = 1\n  AND ssa.[EntryDate] < CURRENT_TIMESTAMP",
+          "Version": "6",
+          "ExternalRuleId": "MEW",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Discipline",
+      "Description": "Discipline",
+      "Rules": [
+        {
+          "Name": "Inactive at Time of Offense",
+          "Description": "The student was inactive on the date of the discipline record.",
+          "ErrorMessage": "The student was inactive on the date of the discipline record.",
+          "SeverityLevel": 1,
+          "Resolution": "Please verify the student the discipline record is assigned to and the discipline record information for accuracy.",
+          "Sql": "SELECT\n  [LocalEducationAgencyId],\n  [SchoolId] AS 'EducationOrganizationId',\n  [SchoolId],\n  (\n    CASE\n      WHEN (\n        [StudentUniqueId] IS NULL\n        OR LTRIM(RTRIM([StudentUniqueId])) = ''\n      ) THEN (\n        CASE\n          WHEN (\n            [DistrictLocalId] IS NULL\n            OR LTRIM(RTRIM([DistrictLocalId])) = ''\n          ) THEN [NameAlphakey]\n          ELSE [DistrictLocalId]\n        END\n      )\n      ELSE [StudentUniqueId]\n    END\n  ) AS 'StudentUniqueId',\n  [IncidentIdentifier],\n  [IncidentIdentifier] AS 'Discriminator',\n  [IncidentDate],\n  [IncidentTime],\n  [LastModifiedDate]\nFROM\n  [Supplemental].[skyward].[StudentDisciplineOffenseErrors]\nWHERE\n  [ErrorCode] = 'InactiveDiscOff'",
+          "Version": "3",
+          "ExternalRuleId": "IDO",
+          "MaxNumberResults": 999999,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    }
+  ],
+  "Tags": [],
+  "DestinationTable": "EdFiRuleExecutionLogDetails",
+  "DestinationStructure": "[{\"Name\":\"id\",\"Type\":\"int\",\"IsNullable\":false},{\"Name\":\"educationorganizationid\",\"Type\":\"int\",\"IsNullable\":true},{\"Name\":\"studentuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"coursecode\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"discriminator\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"programname\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"staffuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"otherdetails\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"ruleexecutionlogid\",\"Type\":\"int\",\"IsNullable\":false}]"
+}

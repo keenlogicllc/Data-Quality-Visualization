@@ -1,0 +1,221 @@
+{
+  "Name": "End of Year",
+  "Description": "These scripts are used by Skyward Districts to prepare the Skyward database for End of Year Rollover. ",
+  "EnvironmentType": "Ed-Fi v2.X",
+  "Containers": [
+    {
+      "Name": "EOY Student Verification Report",
+      "Description": "Data quality issues to be fixed during Year End processes",
+      "Rules": [
+        {
+          "Name": "Inactive with an Entry Record",
+          "Description": "The student is inactive but has an open entry/withdrawal record in this entity.",
+          "ErrorMessage": "The student is inactive but has an open entry/withdrawal record in this entity.",
+          "SeverityLevel": 2,
+          "Resolution": "Either make the student active, delete the entry record, or withdraw the student.",
+          "Sql": "select\n  s.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  ssa.EntryDate,\n  si.LocalEducationAgencyId,\n  si.SchoolId AS EducationOrganizationId,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.CurrentYearStatus,\n  si.NextYearStatus,\n  ssa.ExitWithdrawDate\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nwhere\n  ssa.StudentUSI IS NOT NULL\n  AND si.CurrentYearStatus = 'I'\n  AND ssa.ExitWithdrawDate IS NULL\nORDER BY\n  si.LocalEducationAgencyId,\n  s.LastSurname",
+          "Version": "11",
+          "ExternalRuleId": "IE",
+          "MaxNumberResults": 5000,
+          "Tags": []
+        },
+        {
+          "Name": "Active without an Entry Record",
+          "Description": "The student is active but does not have an open entry/withdrawal record in this entity.",
+          "ErrorMessage": "The student is active but does not have an open entry/withdrawal record in this entity.",
+          "SeverityLevel": 2,
+          "Resolution": "Either make the student inactive or add an entry/withdrawal record in this entity.",
+          "Sql": "select\n  s.StudentUSI,\n  --,s.StudentUniqueId\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  si.CurrentYearStatus,\n  si.NextYearStatus\nfrom\n  edfi.student s\n  right outer join Supplemental.vw_EoyStudentVerification si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI --AND ssa.[ExitWithdrawDate] IS NULL\nwhere\n  --ssa.StudentUSI IS NULL\n  si.CurrentYearStatus = 'A' --and ExitWithdrawDate IS NOT NUll\n  and si.StudentUSI is null\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationID,\n  s.LastSurname",
+          "Version": "12",
+          "ExternalRuleId": "AE",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Advanced/Retained Student",
+          "Description": "The student's Advanced flag is Yes and either the Retained flag is Yes or the Grade Promotion Status is currently \"R\".",
+          "ErrorMessage": "The student's Advanced flag is Yes and either the Retained flag is Yes or the Grade Promotion Status is currently \"R\".",
+          "SeverityLevel": 2,
+          "Resolution": "Check to make sure whether the student should have a Yes for Adavanced, if the Retained flag should be No, or if the Grade Promotion Status should be something other than \"R\".",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.IsAdvanced,\n  si.IsRetained,\n  si.GradePromotionStatus\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nwhere\n  si.IsAdvanced = 1\n  AND (\n    si.IsRetained = 1\n    OR si.GradePromotionStatus = 'R'\n  )\nORDER BY\n  si.LocalEducationAgencyId,\n  s.LastSurname",
+          "Version": "8",
+          "ExternalRuleId": "AR",
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "Outgoing Next Year Status",
+          "Description": "The student is a member of this entity's outgoing class, is being promoted, and is not withdrawn with a WD1 but has a Next Year Status of Active.",
+          "ErrorMessage": "The student is a member of this entity's outgoing class, is being promoted, and is not withdrawn with a WD1 but has a Next Year Status of Active.",
+          "SeverityLevel": 2,
+          "Resolution": "Review both the withdrawal code and Next Year Status.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.[GradYear],\n  si.[NextYearGradYear],\n  si.[GradReqBaseYear],\n  si.[OutgoingClass],\n  si.NextYearStatus,\n  d2.CodeValue,\n  si.GradePromotionStatus\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.OutgoingClass = '1'\n  and si.GradePromotionStatus in ('P', '')\n  and (\n    d2.[CodeValue] IS NULL\n    OR d2.CodeValue <> 'WD1'\n  )\n  and si.NextYearStatus = 'A'\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationId,\n  s.LastSurname",
+          "Version": "10",
+          "ExternalRuleId": "ON",
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "Summer School Next Year Status",
+          "Description": "The student is a member of the summer school entity and has a Next Year Status of Active.",
+          "ErrorMessage": "The student is a member of the summer school entity and has a Next Year Status of Active.",
+          "SeverityLevel": 2,
+          "Resolution": "Next Year Status must be Inactive.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.[SummerSchoolEntity],\n  si.[NextYearStatus]\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.[SummerSchoolEntity] = '1'\n  and si.[NextYearStatus] = 'A'\nORDER BY\n  si.LocalEducationAgencyId,\n  s.LastSurname",
+          "Version": "6",
+          "ExternalRuleId": "SN",
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "Adult Student with Promotion Status",
+          "Description": "The adult education student has either their Advanced or Retained flag set. The student has a Grade Level Override (GLO) set.",
+          "ErrorMessage": "The adult education student has either their Advanced or Retained flag set. The student has a Grade Level Override (GLO) set.",
+          "SeverityLevel": 2,
+          "Resolution": "Clear the Advanced and/or Retained flags.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  d.Description as EntryGradeLevel,\n  si.IsAdvanced,\n  si.IsRetained\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  (d.Description like '%Adult%')\n  and (\n    si.IsAdvanced = 1\n    OR si.IsRetained = 1\n  )",
+          "Version": "6",
+          "ExternalRuleId": "AP",
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "Promoted Next Year Grad Year",
+          "Description": "If the student is being promoted, the Next Year Grad Year must match the Current Grad Year.",
+          "ErrorMessage": "If the student is being promoted, the Next Year Grad Year must match the Current Grad Year.",
+          "SeverityLevel": 2,
+          "Resolution": "Verify Promotion Status and then correct the Next Year Grad Year to match the Current Grad Year.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,Case\n    when si.[GradYear] <> si.[NextYearGradYear] then 'Not Equal'\n    else 'Equal'\n  end as Compare,\n  si.[GradYear],\n  si.[NextYearGradYear],\n  [GradePromotionStatus]\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.[GradYear] <> si.[NextYearGradYear]\n  and si.[IsRetained] = 0\n  and si.[GradYear] NOT IN (9930, 9931)\n  and si.[HasDeferral] = 0\nORDER BY\n  si.LocalEducationAgencyId,\n  s.LastSurname",
+          "Version": "8",
+          "ExternalRuleId": "PY",
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "Deferral Student",
+          "Description": "The student is marked as a continuing education student. (This is not an error but these students will need to be processed manually after rollover.)",
+          "ErrorMessage": "The student is marked as a continuing education student. (This is not an error but these students will need to be processed manually after rollover.)",
+          "SeverityLevel": 1,
+          "Resolution": "This is not an error but these students will need to be processed manually after rollover.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.GradePromotionStatus\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  GradePromotionStatus = 'D'\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationID,\n  s.LastSurname",
+          "Version": "7",
+          "ExternalRuleId": "DF",
+          "MaxNumberResults": 10000,
+          "Tags": []
+        },
+        {
+          "Name": "Enrolled Graduated Student",
+          "Description": "The student's Current Grad Year is prior to the current school year but had an entry/withdrawal record this year. The student is considered to have already graduated.",
+          "ErrorMessage": "The student's Current Grad Year is prior to the current school year but had an entry/withdrawal record this year. The student is considered to have already graduated.",
+          "SeverityLevel": 2,
+          "Resolution": "Review student's Entry/Withdrawal record.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.GradYear as CurrentGradYear\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.GradYear < 2021\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationID,\n  s.LastSurname",
+          "Version": "6",
+          "ExternalRuleId": "GD",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Advanced Next Year Grad Year",
+          "Description": "If the student is marked Advanced, the Next Year Grad Year must be the Current Grad Year minus one.",
+          "ErrorMessage": "If the student is marked Advanced, the Next Year Grad Year must be the Current Grad Year minus one.",
+          "SeverityLevel": 2,
+          "Resolution": "Either the Advanced flag should be changed from \"Yes\" to \"No\" or the NY GY should be decramented 1.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.[IsAdvanced],\n  si.[GradYear],\n  si.[NextYearGradYear]\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.[IsAdvanced] = '1'\n  and si.[NextYearGradYear] != si.[GradYear] - 1",
+          "Version": "9",
+          "ExternalRuleId": "AY",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Academically Advanced without Good Cause Exemption",
+          "Description": "The student has a Grade Promotion Status of \"A\" (academically advanced) but does not have a Good Cause Exemption code.",
+          "ErrorMessage": "The student has a Grade Promotion Status of \"A\" (academicially advanced) but does not have a Good Cause Exemption code.",
+          "SeverityLevel": 2,
+          "Resolution": "Add the Good Cause Exemption code on the Grade Promotion Status. ",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.GradePromotionStatus,\n  si.GoodCauseExemption\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.GradePromotionStatus = 'A'\n  and (\n    GoodCauseExemption = ''\n    or GoodCauseExemption = 'Z'\n  )\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationID,\n  s.LastSurname",
+          "Version": "5",
+          "ExternalRuleId": "GC",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Retained Next Year Status",
+          "Description": "The student is being retained and the Next Year Status is Inactive (unless the student is future enrolled in a different entity or does not have a W01 withdrawal code).",
+          "ErrorMessage": "The student is being retained and the Next Year Status is Inactive (unless the student is future enrolled in a different entity or does not have a W01 withdrawal code).",
+          "SeverityLevel": 2,
+          "Resolution": "Change the Next Year Status to Active.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution --,si.[SummerSchoolEntity]\n,\n  si.[NextYearStatus],\n  si.IsRetained,\n  d2.CodeValue as WithdrawlCode\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.IsRetained = '1'\n  and si.[NextYearStatus] = 'I'\n  and (\n    d2.CodeValue = 'W01' --additional logic needed to check for not next year enrolled\n  )",
+          "Version": "5",
+          "ExternalRuleId": "RN",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Grade Level Override",
+          "Description": "The student has a Grade Level Override (GLO) set.",
+          "ErrorMessage": "The student has a Grade Level Override (GLO) set.",
+          "SeverityLevel": 1,
+          "Resolution": "Remove the Grade Level Override.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.GradeLevelOverride\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  GradeLevelOverride IS NOT NULL AND\n  TRIM(GradeLevelOverride) <> ''\nGROUP BY\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.GradeLevelOverride\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationID,\n  s.LastSurname",
+          "Version": "6",
+          "ExternalRuleId": "GO",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Retained Flags Mismatch",
+          "Description": "The student's Retained flag is Yes but the Grade Promotion Status is not \"R\".",
+          "ErrorMessage": "The student's Retained flag is Yes but the Grade Promotion Status is not \"R\".",
+          "SeverityLevel": 2,
+          "Resolution": "If the Retained flag is correct, then set Grade Promotion Status = R",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.[GradePromotionStatus],\n  si.[IsRetained]\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.[GradePromotionStatus] <> 'R'\n  and si.[IsRetained] = 1\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationID,\n  s.LastSurname",
+          "Version": "5",
+          "ExternalRuleId": "RR",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Retained Next Year Grad Year",
+          "Description": "If the student is being retained, the Next Year Grad Year must be the Current Grade Year plus one.",
+          "ErrorMessage": "If the student is being retained, the Next Year Grad Year must be the Current Grade Year plus one.",
+          "SeverityLevel": 2,
+          "Resolution": "Ensure that the student should be retained and adjust NY GY so that it is equal to the CGY plus 1.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.[IsRetained],\n  si.[GradYear],\n  si.[NextYearGradYear]\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.[NextYearGradYear] <> si.[GradYear] + 1\n  and si.[IsRetained] = 1\nORDER BY\n  s.LastSurname,\n  si.LocalEducationAgencyId",
+          "Version": "6",
+          "ExternalRuleId": "RY",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Retained Grad Req Base Year Mismatch (Grades 08 and Below)",
+          "Description": "If the student is being retained and is in eighth grade or below, the Grad Req Base Year must match the Next Year Grad Year.",
+          "ErrorMessage": "If the student is being retained and is in eighth grade or below, the Grad Req Base Year must match the Next Year Grad Year.",
+          "SeverityLevel": 2,
+          "Resolution": "If the student should be retained, then adjust the Grad Req Base Year to match the Next Year Grad Year.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  si.GradReqBaseYear,\n  si.[NextYearGradYear],\n  [GradePromotionStatus],(\n    Select\n      CASE\n        When IsRetained = 1 then 'True'\n        Else 'False'\n      End\n  ) as IsRetained\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  (\n    si.GradePromotionStatus = 'R'\n    or IsRetained = 1\n  )\n  and si.GradReqBaseYear <> si.[NextYearGradYear]\n  and (\n    d.Description NOT IN (\n      '10th Grade',\n      '11th Grade',\n      '12th Grade',\n      '9th Grade',\n      'Adult Education',\n      'Adult, High School graduate',\n      'Adult, Nonhigh School graduate',\n      'Early Education',\n      'Eleventh Grade',\n      'Grade 13',\n      'Ninth Grade',\n      'None',\n      'Other',\n      'Postsecondary',\n      'Tenth Grade',\n      'Twelfth Grade',\n      'Ungraded'\n    )\n    OR d.Description is null\n  )\nORDER BY\n  si.LocalEducationAgencyId,\n  EducationOrganizationID,\n  s.LastSurname",
+          "Version": "6",
+          "ExternalRuleId": "R8",
+          "MaxNumberResults": 100000,
+          "Tags": []
+        },
+        {
+          "Name": "Promoted Grad Req Base Year Mismatch (Grades 08 and Below)",
+          "Description": "If the student is being promoted and is in eighth grade or below, the Grad Req Base Year must match the Current Grad Year.",
+          "ErrorMessage": "If the student is being promoted and is in eighth grade or below, the Grad Req Base Year must match the Current Grad Year.",
+          "SeverityLevel": 2,
+          "Resolution": "Change the Grade Req Base Year to match the Current Grad Year.",
+          "Sql": "select\n  s.StudentUSI,\n  si.StudentUniqueId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  si.LocalEducationAgencyId,\n  si.SchoolId as EducationOrganizationID,\n  si.SchoolId,\n  eo.NameOfInstitution,\n  d.Description as GradeLevel,\n  si.[GradYear],\n  si.[GradReqBaseYear],\n  [GradePromotionStatus]\nfrom\n  edfi.student s\n  right outer join [Supplemental].[vw_EoyStudentVerification] si on s.StudentUniqueId = si.StudentUniqueId\n  left join edfi.StudentSchoolAssociation ssa on s.StudentUSI = ssa.StudentUSI\n  and ssa.SchoolId = si.SchoolId\n  left join edfi.Descriptor d ON d.DescriptorId = ssa.EntryGradeLevelDescriptorId\n  left join edfi.Descriptor d2 on d2.DescriptorId = ssa.ExitWithdrawTypeDescriptorId\n  left join edfi.EducationOrganization eo on si.SchoolId = eo.EducationOrganizationId\nWHERE\n  si.[GradYear] <> si.[GradReqBaseYear]\n  and si.[IsRetained] = 0\n  and (\n    d.Description NOT IN (\n      '10th Grade',\n      '11th Grade',\n      '12th Grade',\n      '9th Grade',\n      'Adult Education',\n      'Adult, High School graduate',\n      'Adult, Nonhigh School graduate',\n      'Early Education',\n      'Eleventh Grade',\n      'Grade 13',\n      'Ninth Grade',\n      'None',\n      'Other',\n      'Postsecondary',\n      'Tenth Grade',\n      'Twelfth Grade',\n      'Ungraded'\n    ) --OR\td.Description is null\n  )\nORDER BY\n  si.LocalEducationAgencyId,\n  s.LastSurname",
+          "Version": "5",
+          "ExternalRuleId": "P8",
+          "MaxNumberResults": 10000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    }
+  ],
+  "Tags": [],
+  "DestinationTable": "EdFiRuleExecutionLogDetails",
+  "DestinationStructure": "[{\"Name\":\"id\",\"Type\":\"int\",\"IsNullable\":false},{\"Name\":\"educationorganizationid\",\"Type\":\"int\",\"IsNullable\":true},{\"Name\":\"studentuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"coursecode\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"discriminator\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"programname\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"staffuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"otherdetails\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"ruleexecutionlogid\",\"Type\":\"int\",\"IsNullable\":false}]"
+}

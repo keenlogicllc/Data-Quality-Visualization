@@ -1,0 +1,48 @@
+{
+  "Name": "Human Resources",
+  "Description": "Human Resources",
+  "EnvironmentType": "Ed-Fi v3.X",
+  "Containers": [
+    {
+      "Name": "Assignments",
+      "Description": "Assignments",
+      "Rules": [
+        {
+          "Name": "Active Staff Without Assignments",
+          "Description": "These are active staff, as determined by having an employment record with a Hire Date that IS NOT NULL and an End Date that IS NULL, who do not have an assignment.",
+          "ErrorMessage": "Active staff member without an assignment",
+          "SeverityLevel": 1,
+          "Resolution": "Please check the HR system to make sure the staff member is configured with the appropriate information to generate an assignment record.",
+          "Sql": "SELECT\n  s.[StaffUniqueId],\n  s.[LastSurname],\n  s.[FirstName],\n  s.[MiddleName],\n  si.[LocalEducationAgencyId],\n  seoea.[EducationOrganizationId],\n  seoea.[EducationOrganizationId] AS 'SchoolId',\n  seoea.[HireDate],\n  si.[EmployeeTypeDesc],\n  si.[EmploymentType],\n  si.[isActiveEmployee],\n  si.[isActiveSecuredUser],\n  si.[LastCheckDate]\nFROM\n  [edfi].[Staff] s\n  RIGHT OUTER JOIN [Supplemental].[vw_StaffSupplemental] si ON s.StaffUniqueId = si.StaffUniqueId\n  LEFT JOIN [edfi].[StaffEducationOrganizationEmploymentAssociation] seoea ON s.staffusi = seoea.StaffUSI\n  LEFT JOIN [edfi].[StaffEducationOrganizationAssignmentAssociation] seoaa ON s.staffusi = seoaa.StaffUSI\nWHERE\n  (\n    seoea.[EducationOrganizationId] NOT IN (29001, 349001)\n    OR (\n      seoea.[EducationOrganizationId] = 29001\n      AND si.[EmployeeTypeDesc] != 'Hourly'\n      AND si.[EmployeeTypeDesc] NOT LIKE '%SUB%'\n      AND si.EmploymentType <> 'TP'\n    )\n    OR (\n      seoea.[EducationOrganizationId] = 349001\n      AND si.[BuildingLocation] != '9999'\n      AND si.[CheckLocation] != '9999'\n    )\n  )\n  AND seoea.[HireDate] IS NOT NULL\n  AND seoea.[EndDate] IS NULL\n  AND seoaa.[StaffUSI] IS NULL\n  AND si.[EmployeeTypeDesc] NOT LIKE '%SUB%'\n  AND si.[EmployeeTypeDesc] NOT LIKE '%Hourly%'\nORDER BY\n  seoea.[EducationOrganizationId]",
+          "Version": "14",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 5000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    },
+    {
+      "Name": "Employee Profile",
+      "Description": "Employee Profile",
+      "Rules": [
+        {
+          "Name": "Teachers Missing FLEID",
+          "Description": "These active teachers are missing FLEID's.",
+          "ErrorMessage": "These active teachers do not have FLEID's",
+          "SeverityLevel": 1,
+          "Resolution": "Go through steps of populating FLEID's for staff in the Skyward Business Database.",
+          "Sql": "Select\n  s.staffuniqueid,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  s.LoginId,\n  LEFT(\n    RIGHT(\n      '00' + CONVERT(VARCHAR(6), seoea.EducationOrganizationId),\n      6\n    ),\n    2\n  ) as LocalEducationAgencyId,\n  --LEFT(seoea.EducationOrganizationId,2)AS DistrictNumber,\n  seoea.EducationOrganizationId,\n  seoea.EducationOrganizationId as SchoolId,\n  eo.NameOfInstitution,\n  seoea.HireDate,\n  seoea.EndDate,\n  --,seoaa.EducationOrganizationId\n  seoaa.PositionTitle,\n  d.CodeValue as JobCode,\n  d.Description as JobCodeDescription\nfrom\n  edfi.staff s\n  left outer join [EdFi_Prodv2_Ods_2021].[edfi].[StaffEducationOrganizationEmploymentAssociation] seoea on s.StaffUSI = seoea.StaffUSI\n  left outer join edfi.StaffEducationOrganizationAssignmentAssociation seoaa on s.StaffUSI = seoaa.StaffUSI\n  and seoaa.EducationOrganizationId = seoea.EducationOrganizationId FULL\n  outer join edfi.Descriptor d on seoaa.StaffClassificationDescriptorId = d.DescriptorId FULL\n  outer join edfi.EducationOrganization eo on eo.EducationOrganizationId = seoea.EducationOrganizationId\nwhere\n  s.StaffUniqueId NOT IN (\n    Select\n      s2.StaffuniqueId\n    from\n      edfi.staff s2\n      INNER JOIN (\n        SELECT\n          S.FirstName,\n          S.LastSurname,\n          S.MiddleName,\n          S.LoginId,\n          S.Birthdate --,LEFT(S.StaffUniqueId,2)AS DistrictNumber\n,\n          COUNT(*) AS CountOf\n        FROM\n          edfi.Staff S\n        GROUP BY\n          FirstName,\n          LastSurname,\n          S.MiddleName,\n          LoginId,\n          BirthDate --,LEFT(S.StaffUniqueId,2)\n        HAVING\n          COUNT(*) > 1\n      ) a on a.FirstName = s2.FirstName\n      and a.BirthDate = s2.BirthDate\n      and a.LastSurname = s2.LastSurname\n      and a.MiddleName = s2.MiddleName\n      and a.LoginId = s2.LoginId\n  )\n  AND seoea.enddate is null\n  AND s.StaffUniqueId not like 'FL%'\n  AND d.Description like '%Teacher%'\n  AND d.Description not like '%Substitute%'\norder by\n  LocalEducationAgencyId,\n  s.LastSurname,\n  s.FirstName,\n  s.MiddleName,\n  s.BirthDate,\n  StaffUniqueId",
+          "Version": "9",
+          "ExternalRuleId": null,
+          "MaxNumberResults": 5000,
+          "Tags": []
+        }
+      ],
+      "Tags": []
+    }
+  ],
+  "Tags": [],
+  "DestinationTable": "EdFiRuleExecutionLogDetails",
+  "DestinationStructure": "[{\"Name\":\"id\",\"Type\":\"int\",\"IsNullable\":false},{\"Name\":\"educationorganizationid\",\"Type\":\"int\",\"IsNullable\":true},{\"Name\":\"studentuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"coursecode\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"discriminator\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"programname\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"staffuniqueid\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"otherdetails\",\"Type\":\"nvarchar\",\"IsNullable\":true},{\"Name\":\"ruleexecutionlogid\",\"Type\":\"int\",\"IsNullable\":false}]"
+}
