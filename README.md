@@ -1,1 +1,1 @@
-# data-quality-visualization
+# Data-Quality-Visualization
