@@ -5,7 +5,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------
 --Collections Dimension
 ----------------------------------------------------------------------------------------------------------------------------------
-CREATE view [bi].[dim_collections] as
+CREATE OR ALTER VIEW [bi].[dim_collections] as
 SELECT
 	Collections.Name collections_name,
 	Collections.Description collections_description,
@@ -28,7 +28,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------
 --Error Fact Table
 -----------------------------------------------------------------------------------------------------------------------------------
-CREATE VIEW [bi].[fct_rule_execution_log_details] AS
+CREATE OR ALTER VIEW [bi].[fct_rule_execution_log_details] AS
 select * from(
 	SELECT 
 		RuleId										as 'rule_id'
@@ -72,7 +72,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------
 --District Dimension
 -----------------------------------------------------------------------------------------------------------------------------------
-CREATE view [bi].[dim_District] as
+CREATE OR ALTER VIEW [bi].[dim_District] as
 with cte (EducationOrganizationId) as (
 
 	Select DISTINCT RIGHT('000000' + CAST(EducationOrganizationId AS VARCHAR), 6) as EducationOrganizationId
@@ -91,7 +91,7 @@ GO
 ----------------------------------------------------------------------------------------------------------------------------------
 --District Dimension
 -----------------------------------------------------------------------------------------------------------------------------------
-CREATE view [bi].[dim_environments] as
+CREATE OR ALTER VIEW [bi].[dim_environments] as
 SELECT
 	Environments.Id evironments_id,
 	Environments.Name  environments_name
@@ -108,7 +108,7 @@ GO
 -----------------------------------------------------------------------------------------------------------------------------------
 
 
-CREATE view [bi].[dim_rules] as
+CREATE OR ALTER VIEW [bi].[dim_rules] as
 SELECT
 	Rules.Id rules_id,
 	Rules.Name rules_name,
@@ -142,7 +142,7 @@ GO
 --Containers Dimension
 -----------------------------------------------------------------------------------------------------------------------------------
 
-CREATE view [bi].[dim_containers] as
+CREATE OR ALTER VIEW [bi].[dim_containers] as
 SELECT
 	Containers.Id	container_id,
 	Containers.Name container_name,
@@ -150,7 +150,7 @@ SELECT
 FROM
 	datachecker.Containers
 
-WHERE Containers.name is not null
+WHERE containers.ParentContainerId != containers.Id and Containers.name is not null
 
 GROUP BY 
 	Containers.Name,
