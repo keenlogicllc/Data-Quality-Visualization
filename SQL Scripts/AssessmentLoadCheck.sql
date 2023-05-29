@@ -9,7 +9,7 @@
 -------------------------------------------------------------
 --Knowledge of these tables is needed:
 	--SELECT * from edfi.Descriptor where Namespace like '%Assessment%Descriptor' OR Namespace like '%GradeLevelDescriptor' ORDER BY Namespace
-	--SELECT * from edfi.Student
+	--SELECT * from edfi.Student  --This table is not used below but good to have a basic understanding
 	--SELECT * from edfi.StudentSchoolAssociation
 	--SELECT * from edfi.Assessment
 	--SELECT * from edfi.AssessmentAcademicSubject
@@ -41,14 +41,14 @@ WITH
 	),
 	assessment as (
 		SELECT
-		  a.[AssessmentIdentifier]
-		  ,a.[Namespace]
-		  ,[AssessmentTitle]
-		  --,[AssessmentCategoryDescriptorId]
+		  a.AssessmentIdentifier
+		  ,a.Namespace
+		  ,AssessmentTitle
+		  --,AssessmentCategoryDescriptorId
 		  ,AssessmentCategory.Description				AS "AssessmentCategory"
-		  ,a.[CreateDate]
-		  ,a.[LastModifiedDate]
-		  ,a.[ChangeVersion]
+		  ,a.CreateDate
+		  ,a.LastModifiedDate
+		  ,a.ChangeVersion
 		  ,'         '									AS "BREAK"
 		  --,aas.AcademicSubjectDescriptorId
 		  ,AcademicSubject.Description					AS "AcademicSubject"
@@ -66,32 +66,32 @@ WITH
 
 	student_assessment as (
 		SELECT
-			[AssessmentIdentifier]
-		  ,sa.[Namespace]
-		  ,[StudentAssessmentIdentifier]
-		  ,[StudentUSI]
-		  ,[AdministrationDate]
-		  ,[AdministrationEndDate]
-		  ,[SerialNumber]
-		  --,[AdministrationLanguageDescriptorId]
+			AssessmentIdentifier
+		  ,sa.Namespace
+		  ,StudentAssessmentIdentifier
+		  ,StudentUSI
+		  ,AdministrationDate
+		  ,AdministrationEndDate
+		  ,SerialNumber
+		  --,AdministrationLanguageDescriptorId
 		  ,AdministrationLanguage.Description			as AdministrationLanguage
-		  --,[AdministrationEnvironmentDescriptorId]
+		  --,AdministrationEnvironmentDescriptorId
 		  ,AdministrationEnvironment.Description		as AdministrationEnvironment
-		  --,[RetestIndicatorDescriptorId]
+		  --,RetestIndicatorDescriptorId
 		  ,RetestIndicator.Description					as RetestIndicator
-		  --,[ReasonNotTestedDescriptorId]
+		  --,ReasonNotTestedDescriptorId
 		  ,ReasonNotTested.Description					as ReasonNotTested
-		  --,[WhenAssessedGradeLevelDescriptorId]
+		  --,WhenAssessedGradeLevelDescriptorId
 		  ,WhenAssessedGradeLevel.Description			as WhenAssessmentGradeLevel
-		  --,[EventCircumstanceDescriptorId]
+		  --,EventCircumstanceDescriptorId
 		  ,EventCircumstance.Description				as EventCircumstance
-		  ,[EventDescription]
-		  ,[SchoolYear]
-		  --,[PlatformTypeDescriptorId]
+		  ,EventDescription
+		  ,SchoolYear
+		  --,PlatformTypeDescriptorId
 		  ,PlatformType.Description						as PlatformType
-		  ,[AssessedMinutes]
-		  ,sa.[CreateDate]
-		  ,sa.[LastModifiedDate]
+		  ,AssessedMinutes
+		  ,sa.CreateDate
+		  ,sa.LastModifiedDate
 		FROM
 			edfi.StudentAssessment sa
 		LEFT JOIN edfi.Descriptor AdministrationEnvironment	 ON sa.AdministrationEnvironmentDescriptorId=AdministrationEnvironment.DescriptorId
