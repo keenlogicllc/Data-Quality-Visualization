@@ -163,12 +163,12 @@ SELECT
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-select 
-	SchoolId,
-	COUNT(StudentUSI) AS "Student Count"
-FROM
-	edfi.StudentSchoolAssociation
-GROUP BY 
-	SchoolId
-ORDER BY
-	SchoolId
+-- select
+-- 	SchoolId,
+-- 	COUNT(StudentUSI) AS "Student Count"
+-- FROM
+-- 	edfi.StudentSchoolAssociation
+-- GROUP BY 
+-- 	SchoolId
+-- ORDER BY
+-- 	SchoolId
