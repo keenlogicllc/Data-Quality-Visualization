@@ -1,22 +1,34 @@
-select DISTINCT d.CodeValue as StudentIdentificationSystemDescriptor_CodeValue
-from edfi.Student s
-left join edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic on s.StudentUSI=seoasic.StudentUSI
-inner join edfi.Descriptor d on seoasic.StudentIdentificationSystemDescriptorId=d.DescriptorId
+SELECT DISTINCT
+    d.CodeValue AS StudentIdentificationSystemDescriptor_CodeValue
+FROM
+    edfi.Student s
+LEFT JOIN
+    edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic ON s.StudentUSI = seoasic.StudentUSI
+INNER JOIN
+    edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
 
-select DISTINCT AssigningOrganizationIdentificationCode
-from edfi.Student s
-left join edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic on s.StudentUSI=seoasic.StudentUSI
-inner join edfi.Descriptor d on seoasic.StudentIdentificationSystemDescriptorId=d.DescriptorId
 
-select
-	s.StudentUSI
-	,s.StudentUniqueId
-	,seoasic.AssigningOrganizationIdentificationCode
-	,seoasic.EducationOrganizationId
-	,seoasic.IdentificationCode
-	,d.CodeValue as StudentIdentificationSystemDescriptor_CodeValue
-	,d.Description as StudentIdentificationSystemDescriptor_Description
-from edfi.Student s
-left join edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic on s.StudentUSI=seoasic.StudentUSI
-inner join edfi.Descriptor d on seoasic.StudentIdentificationSystemDescriptorId=d.DescriptorId
-where IdentificationCode like 'FL%'
+SELECT DISTINCT
+    AssigningOrganizationIdentificationCode
+FROM
+    edfi.Student s
+LEFT JOIN
+    edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic ON s.StudentUSI = seoasic.StudentUSI
+INNER JOIN
+    edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
+
+
+SELECT
+    s.StudentUSI,
+    s.StudentUniqueId,
+    seoasic.AssigningOrganizationIdentificationCode,
+    seoasic.EducationOrganizationId,
+    seoasic.IdentificationCode,
+    d.CodeValue AS StudentIdentificationSystemDescriptor_CodeValue,
+    d.Description AS StudentIdentificationSystemDescriptor_Description
+FROM
+    edfi.Student s
+LEFT JOIN
+    edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic ON s.StudentUSI = seoasic.StudentUSI
+LEFT JOIN
+    edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
