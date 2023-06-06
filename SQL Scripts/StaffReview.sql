@@ -1,3 +1,30 @@
+------------------------------------------------------
+--TITLE: Staff Review
+------------------------------------------------------
+
+------------------------------------------------------------------------------------------
+--PURPOSE: Use this query to see basic staff information alongside Assignments and Employment info
+------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------
+--Knowledge of these tables is needed:
+	
+    --SELECT * from edfi.Staff
+
+    --The below staff tables act similary to the StudentSchoolAssociation in that they connect the staff record to the organization and 
+    --allow the key/secret pair being used by the client to access the records associated to those in the edfi.Staff table. If a staff member 
+    --does not have either an Assignment Association or Employment Association, then the API will return an error and not allow the client
+    --to make any CRUD actions for that staff record.
+
+	--SELECT * from edfi.StaffEducationOrganizationAssignmentAssociation        --Maintains the current assignment for the staff member
+	--SELECT * from edfi.StaffEducationOrganizationEmploymentAssociation        --Maintains whether or not the staff member is employed in the LEA
+
+-------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 SELECT
     Sch.LocalEducationAgencyId,
     Sch.SchoolId,

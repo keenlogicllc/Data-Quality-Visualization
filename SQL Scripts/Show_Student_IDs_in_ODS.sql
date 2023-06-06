@@ -1,3 +1,24 @@
+------------------------------------------------------
+--TITLE: Show Student IDs in ODS
+------------------------------------------------------
+
+------------------------------------------------------------------------------------------
+--PURPOSE: Use these queries to reveal the ID's that each student have in the ODS. 
+------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------
+--Knowledge of these tables is needed:
+	--SELECT * from edfi.Descriptor where Namespace like '%studentIdentificationSystem%'
+    --SELECT * from edfi.StudentEducationOrganizationAssociation
+	--SELECT * from edfi.StudentEducationOrganizationAssociationStudentIdentificationCode  --This table contains the ID's for each student
+-------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--Shows the ID code values available in the ODS
 SELECT DISTINCT
     d.CodeValue AS StudentIdentificationSystemDescriptor_CodeValue
 FROM
@@ -7,7 +28,7 @@ LEFT JOIN
 INNER JOIN
     edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
 
-
+--Identifies the Organizations who assign each code
 SELECT DISTINCT
     AssigningOrganizationIdentificationCode
 FROM
@@ -17,7 +38,7 @@ LEFT JOIN
 INNER JOIN
     edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
 
-
+--Shows each student and the ID's they have associated with to them in the ODS
 SELECT
     s.StudentUSI,
     s.StudentUniqueId,
