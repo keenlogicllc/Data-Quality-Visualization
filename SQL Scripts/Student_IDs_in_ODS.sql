@@ -1,3 +1,4 @@
+<<<<<<< HEAD:SQL Scripts/Show_Student_IDs_in_ODS.sql
 ------------------------------------------------------
 --TITLE: Show Student IDs in ODS
 ------------------------------------------------------
@@ -53,3 +54,39 @@ LEFT JOIN
     edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic ON s.StudentUSI = seoasic.StudentUSI
 LEFT JOIN
     edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
+=======
+SELECT DISTINCT
+    d.CodeValue AS StudentIdentificationSystemDescriptor_CodeValue
+FROM
+    edfi.Student s
+LEFT JOIN
+    edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic ON s.StudentUSI = seoasic.StudentUSI
+INNER JOIN
+    edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
+
+
+SELECT DISTINCT
+    AssigningOrganizationIdentificationCode
+FROM
+    edfi.Student s
+LEFT JOIN
+    edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic ON s.StudentUSI = seoasic.StudentUSI
+INNER JOIN
+    edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
+
+
+SELECT
+    s.StudentUSI,
+    s.StudentUniqueId,
+    seoasic.AssigningOrganizationIdentificationCode,
+    seoasic.EducationOrganizationId,
+    seoasic.IdentificationCode,
+    d.CodeValue AS StudentIdentificationSystemDescriptor_CodeValue,
+    d.Description AS StudentIdentificationSystemDescriptor_Description
+FROM
+    edfi.Student s
+LEFT JOIN
+    edfi.StudentEducationOrganizationAssociationStudentIdentificationCode seoasic ON s.StudentUSI = seoasic.StudentUSI
+LEFT JOIN
+    edfi.Descriptor d ON seoasic.StudentIdentificationSystemDescriptorId = d.DescriptorId
+>>>>>>> fde31e9aa4bd6d27e8e2943024952ef982262c8f:SQL Scripts/Student_IDs_in_ODS.sql
