@@ -88,8 +88,7 @@ FROM
 	students 
 	LEFT JOIN discipline_actions on students.StudentUSI=discipline_actions.StudentUSI
 	LEFT JOIN active_enrollments on students.StudentUSI=active_enrollments.StudentUSI
-WHERE 
-	DisciplineActionIdentifier IS NOT NULL
+WHERE
+	discipline_actions.DisciplineActionIdentifier IS NOT NULL
 ORDER BY
-	DisciplineDate,
-	CAST(DisciplineActionIdentifier AS INT)
+	DisciplineDate
