@@ -1,4 +1,26 @@
+------------------------------------------------------
+--TITLE: Student Discipline Action
+------------------------------------------------------
+
+------------------------------------------------------------------------------------------
+--PURPOSE: Use this query to see the actions being taken for students.
+------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------
+--Knowledge of these tables is needed:
+	--SELECT * from edfi.Descriptor where Namespace like '%Assessment%Descriptor' OR Namespace like '%GradeLevelDescriptor' ORDER BY Namespace
+	--SELECT * from edfi.Student  --This table is not used below but good to have a basic understanding
+	--SELECT * from edfi.StudentSchoolAssociation
+	--SELECT * from edfi.DisciplineAction
+	--SELECT * from edfi.DisciplineActionDiscipline
+-------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 with 
+	--Basic student info
 	students as (
 		SELECT
 			StudentUSI,
@@ -9,7 +31,7 @@ with
 		FROM
 			edfi.Student
 	),
-
+	--Determine what students are actively enrolled
 	active_enrollments as (
 
     select
@@ -28,7 +50,7 @@ with
             and CAST(GETDATE() AS DATE) < ExitWithdrawDate
 			)
 	),
-
+	--Identify the discipline actions
 	discipline_actions as (
 		SELECT
 			da.DisciplineActionIdentifier,
@@ -47,6 +69,8 @@ with
 			LEFT JOIN edfi.DisciplineActionDiscipline dad on da.DisciplineActionIdentifier=dad.DisciplineActionIdentifier AND da.StudentUSI=dad.StudentUSI
 			LEFT JOIN edfi.Descriptor DisciplineAction on dad.DisciplineDescriptorId=DisciplineAction.DescriptorId
 	)
+
+--PUll all of the above queries together to connect students with the discipline actions taken.
 SELECT 
 	StudentUniqueId,
 	LastSurname,
@@ -64,8 +88,7 @@ FROM
 	students 
 	LEFT JOIN discipline_actions on students.StudentUSI=discipline_actions.StudentUSI
 	LEFT JOIN active_enrollments on students.StudentUSI=active_enrollments.StudentUSI
-WHERE 
-	DisciplineActionIdentifier IS NOT NULL
+WHERE
+	discipline_actions.DisciplineActionIdentifier IS NOT NULL
 ORDER BY
-	DisciplineDate,
-	CAST(DisciplineActionIdentifier AS INT)
+	DisciplineDate
