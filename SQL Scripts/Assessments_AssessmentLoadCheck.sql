@@ -25,11 +25,15 @@ WITH
 	student_school_association as (
 		SELECT 
 			StudentUSI,
-			SchoolId,
-			EducationOrganizationId
+			SchoolId
+			--EducationOrganizationId
 		from 
 			edfi.StudentSchoolAssociation
 	),
+
+
+
+
 	student_count as (
 		SELECT
 			COUNT(StudentUSI)		AS "StudentCount",
